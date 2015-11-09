@@ -1,0 +1,93 @@
+ZZZKBot - Install
+=================
+
+Updated:    10th October 2015
+
+
+The following steps are required to build ZZZKBot from source code:
+
+These instructions are simply the same as how you would compile BWAPI
+4.1.2's ExampleAIModule project from source. Note that later versions of
+Windows should probably work too but I have not tested them.
+
+1. On Windows (preferably Windows 7 SP1), install Microsoft Visual Studio
+2013 (preferably Microsoft Visual Studio Express 2013 for Windows Desktop;
+note that this is registerware, i.e. it can be downloaded for free from
+Microsoft without registering, but after 30 days it will prompt you and
+require you to register (free of charge) to be able to continue using it).
+
+2. Install BWAPI 4.1.2 to a path that does not contain spaces. I am not
+sure whether the following instructions will work if you install it to a
+path that contains spaces - I haven't tried it.
+
+3. Set the environment variable BWAPI_DIR to the path of where you installed
+BWAPI 4.1.2 to. Note: the project does not depend on any other libraries,
+does not reference any absolute file paths, and when the bot is run it does
+not require any hard-coded file paths (e.g. it doesn't matter what directory
+you have installed Starcraft: Broodwar to).
+
+4. In Windows Explorer, double-click the ZZZKBot.vcxproj file.
+
+5. Change the drop-down from "Debug" to "Release".
+
+6. From the menu, select: BUILD -> Build Solution. It should build with no
+errors/warnings.
+
+7. A folder ZZZKBot/Release/ should be automatically created when building.
+The output is a single DLL file in that folder named ZZZKBot.dll.
+
+The following steps are required to install ZZZKBot:
+
+Note: ZZZKBot is intended to support being run on Windows XP SP3 and later
+versions of Windows up to and including at least Windows 7 SP1 (later
+versions of Windows such as 8.1, 10 are hoped to work but have not been
+tested, and Vista has not been tested either). It has successfully been
+compiled on Windows 7 SP1 and the resulting DLL worked fine when run on both
+Windows XP SP3 or Windows 7 SP1.
+
+1. Install BWAPI 4.1.2 if you haven't already (and its dependencies, e.g.
+Broodwar).
+
+2. The only file required is the DLL named ZZZKBot.dll from the
+ZZZKBot/Release/ folder (ZZZKBot is not comprised of any other/optional
+files when running it). Rename the DLL if necessary. Some bots including
+ZZZKBot tailor their play according to the opponent player name (possibly
+combined with the opponent race). ZZZKBot.dll should normally be the bot's
+official filename in environments where only the latest version of each bot
+are run and bots are updated frequently. Broodwar has a 24 character limit
+for the name of a player. To facilitate other bots being able to recognise
+ZZZKBot, officially, I suggest to use "ZZZKBot" (do not change the
+case-sensitivity of these letters and do not shorten it) as its name in the
+game lobby where feasible, or if you want to include the version info in the
+filename (which could enable bots to know exactly which version they are
+playing against, and detect/distinguish version changes) I would use the
+first "-" character to enable bots to separate the name part from the
+version part. E.g. for version 1.0 for AIIDE 2015, rename it to
+ZZZKBot-1.0.dll or ZZZKBot-AIIDE2015.dll or ZZZKBot-AIIDE15.dll and use
+"ZZZKBot-1.0" or "ZZZKBot-AIIDE2015" or "ZZZKBot-AIIDE15" respectively as
+its name in the game lobby. If necessary, a different separator such as "_"
+could be used instead of "-" in the filename and player name, or omitted
+entirely (e.g. "ZZZKBot1.0" or "ZZZKBotAIIDE2015" or "ZZZKBotAIIDE15"),
+although this would make it harder for bots to recognise each other. ZZZKBot
+does not currently support playing as more than one race, but for bots that
+do and if you have different instances according to its race (in the same
+environment), or if you want to include the bot's race in the filename and
+player name for whatever reason, I would append a separator character then a
+code for the race ("Protoss"/"Terran"/"Zerg"/"Random" if it fits, otherwise
+"Prot"/"Terr"/"Zerg"/"Rand" if it fits, otherwise "P"/"T"/"Z"/"R"), e.g.
+"SomeOtherBot-1.2.3-Prot" or "SomeOtherBot-CIG2017-P".
+
+3. Install and run the DLL with BWAPI version 4.1.2 as you would normally do
+for any other BWAPI AIModule bot, e.g. copy the DLL to the following folder
+(create parent folders if necessary):
+<Starcraft folder>/bwapi-data/AI/
+and configure its path via the "ai" setting in:
+<Starcraft folder>/bwapi-data/bwapi.ini
+then run e.g. ChaosLauncher and inject as usual, etc. Notes: currently,
+ZZZKBot only properly supports playing as the Zerg race. ZZZKBot does not
+require any other DLLs apart from BWAPI 4.1.2 (it does not use BWTA2/BWTA
+at all). ZZZKBot itself does not use disk I/O (i.e. has no logic to read or
+write files - not even log files). It tailors its behaviour to particular
+opponents based on in-game names of the opponent bot(s).
+
+=============================== End of file ================================

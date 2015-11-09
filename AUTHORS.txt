@@ -1,0 +1,14 @@
+ZZZKBot - Authors
+=================
+
+Updated:    10th October 2015
+
+
+Authors:
+
+    Chris Coxe (handle: Quatari), e-mail: chris (dot) coxe (at) gmail (dot) com
+
+Contributions are welcomed, but I don't know whether I will maintain
+ZZZKBot or for how long. See BUGS.txt.
+
+=============================== End of file ================================

@@ -1,0 +1,11 @@
+ZZZKBot - Changes
+=================
+
+Updated:    10th October 2015
+
+
+Version 1.0: version submitted on 10th October 2015 for the AIIDE 2015
+Starcraft AI competition. See file "SCAI2015_ENTRY.txt" for submission
+details.
+
+=============================== End of file ================================

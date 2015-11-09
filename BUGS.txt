@@ -1,0 +1,16 @@
+ZZZKBot - Bugs
+==============
+
+Updated:    10th October 2015
+
+
+I don't know whether I will continue to maintain ZZZKBot. After AIIDE 2015 I
+might add it as a project on GitHub, probably:
+https://github.com/chriscoxe/ZZZKBot
+
+If I create the project, please report bugs and issues there. In the
+meantime, e-mail bug reports to: chris (dot) coxe (at) gmail (dot) com.
+Regardless, please don't expect a response/fix unless I decide to continue
+maintaining ZZZKBot.
+
+=============================== End of file ================================

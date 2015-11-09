@@ -1,0 +1,30 @@
+ZZZKBot - License
+=================
+
+Updated:    10th October 2015
+
+
+Copyright 2015 Chris Coxe. The program is distributed under the terms of the
+GNU Lesser General Public License (LGPL) version 3.
+
+A copy of the GPL license is provided in file COPYING.txt.
+A copy of the LGPL license is provided in file COPYING.LESSER.txt.
+
+ZZZKBot is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ZZZKBot is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+ZZZKBot is a modification of BWAPI version 4.1.2's ExampleAIModule project
+and source code, and links dynamically with BWAPI version 4.1.2. BWAPI
+version 4.1.2 is distributed under the terms of the GNU Lesser General
+Public License (LGPL) version 3. It is freely available at:
+https://github.com/bwapi/bwapi/releases/tag/v4.1.2
+
+=============================== End of file ================================
+
