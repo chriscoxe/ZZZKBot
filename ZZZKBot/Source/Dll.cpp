@@ -23,9 +23,11 @@
 // of BWAPI version 4.1.2
 // (https://github.com/bwapi/bwapi/releases/tag/v4.1.2 which is
 // distributed under the terms of the GNU Lesser General Public License
-// (LGPL) version 3).
+// (LGPL) version 3), then updating it to be compatible with a later version
+// of BWAPI.
 
 #include <BWAPI.h>
+#include <Windows.h>
 
 #include "ZZZKBotAIModule.h"
 

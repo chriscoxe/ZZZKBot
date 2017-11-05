@@ -1,11 +1,11 @@
 ZZZKBot - Bugs
 ==============
 
-Updated:    7th September 2016
+Updated:    1st September 2017
 
 
-I don't know whether I will continue to maintain ZZZKBot. The project is on
-GitHub, at:
+I still don't know whether I will continue to maintain ZZZKBot. The project
+is on GitHub, at:
 https://github.com/chriscoxe/ZZZKBot
 
 Please report bugs and issues there. Please don't expect a response/fix

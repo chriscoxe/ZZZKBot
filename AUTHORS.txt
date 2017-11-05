@@ -1,14 +1,16 @@
 ZZZKBot - Authors
 =================
 
-Updated:    7th September 2016
+Updated:    1st September 2017
 
 
 Authors:
 
-    Chris Coxe (handle: Quatari), e-mail: chris (dot) coxe (at) gmail (dot) com
+    Name: Chris Coxe
+	Handle: Quatari
+	E-mail: chris (dot) coxe (at) gmail (dot) com
 
-Contributions are welcomed, but I don't know whether I will maintain
+Contributions are welcomed, but I still don't know whether I will maintain
 ZZZKBot or for how long. See BUGS.txt.
 
 =============================== End of file ================================
