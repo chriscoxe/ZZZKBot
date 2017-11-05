@@ -1,13 +1,13 @@
 ZZZKBot - ReadMe
 ================
 
-Updated:    7th September 2016
+Updated:    16th July 2017
 
 
 ZZZKBot is a bot for Starcraft: Broodwar.  It uses BWAPI as an API for
-interacting with Starcraft: Broodwar. See SCAI2016_ENTRY.txt for more
-information about the (1.2) version that was submitted for the AIIDE
-2016 competition.
+interacting with Starcraft: Broodwar. See CIG2017_ENTRY.txt for more
+information about the (1.4.0) version that was submitted for the CIG
+2017 competition.
 
 Some things to know about ZZZKBot:
 ----------------------------------

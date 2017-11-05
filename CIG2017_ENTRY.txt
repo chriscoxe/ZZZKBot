@@ -1,10 +1,11 @@
-Entry Name                                   : ZZZKBot (don't change the case-sensitivity of these letters and don't shorten it)
+Entry Name                                   : ZZZKBot (don't change the case-sensitivity of these letters and don't shorten/rename it)
 Contact Person Name (First, Last)            : Chris Coxe
 Contact Person Email Address:                : chris (dot) coxe (at) gmail (dot) com
 Affiliation                                  : Independent
 Race (in full game)                          : Zerg
 DLL or ProxyBot                              : DLL
-BWAPI Version (3.7.4 or 4.1.2)                 : 4.1.2
+BWAPI Version (3.7.4 or 4.1.2 or 4.2.0)      : 4.1.2
+Use File I/O                                 : Yes (but only for logging/record-keeping - not for learning)
 Brief Description (AI techniques used, strengths, etc) :
 
 A simple throw-away proof-of-concept cheesy kamikaze 4-pool bot implemented in
@@ -14,10 +15,10 @@ scouting, targeting and resource-gathering. Apart from targeting its micro is
 very limited. Stays at 9 or 10 supply for several minutes of in-game time then
 techs straight to mutalisks or guardians (on only 1 base... soon runs out of
 gas...) in an attempt to finish off static defences of idle opponents, and
-mutalisks in an attempt to destroy lifted buildings. Uses speedling build
-against some opponents. Doesn't do much else. ZZZKBot is an improved and
-heavily refactored version of ZZZBot (ZZZBot won first rank in the CIG 2015
-Starcraft AI competition).
+mutalisks in an attempt to destroy lifted buildings. Uses speedling or muta
+rush build against some opponents. Doesn't do much else. ZZZKBot is an
+improved and heavily refactored version of ZZZBot (ZZZBot won first rank in the
+CIG 2015 Starcraft AI competition).
 
 Technical details and instructions:
 
@@ -32,8 +33,8 @@ didn't do well in CIG 2015) and I haven't focussed on cleaning it up or
 rewriting it properly. I used BWAPI version 4.1.2's ExampleAIModule project as
 the source code starting point (i.e. C++).
 
-Version: 1.2, i.e. version for the AIIDE 2016 Starcraft AI competition
-submitted on 7th September 2016. The DLL file included in the submission was
+Version: 1.4.0, i.e. version for the CIG 2017 Starcraft AI competition
+submitted on 16th July 2017. The DLL file included in the submission was
 compiled on Windows 7 SP1 using Microsoft Visual Studio Express 2013 for
 Windows Desktop (in Release mode not Debug mode) and I have tested that the
 exact DLL file included in the submission runs fine on Windows XP SP3 and runs
@@ -45,7 +46,7 @@ in LICENSE.txt.
 Instructions to build ZZZKBot from source code:
 
 Note: these instructions have been tailored/condensed specifically for the
-AIIDE 2016 Starcraft AI competition submission. If you want more info please
+CIG 2017 Starcraft AI competition submission. If you want more info please
 see INSTALL.txt for the full generic instructions including how to install it,
 but you shouldn't need to read it. It might be helpful if you encounter
 problems.
@@ -76,15 +77,17 @@ you have installed Starcraft: Broodwar to).
 6. Change the drop-down from "Debug" to "Release".
 
 7. From the menu, select: BUILD -> Build Solution. It should build with no
-errors/warnings.
+errors/warnings but may take quite a long time to build (say 15 minutes).
 
 8. A folder ZZZKBot/Release/ should be automatically created when building.
 The output is a single DLL file in that folder named ZZZKBot.dll (ZZZKBot is
-not comprised of any other/optional files when running it).
+not comprised of any other/optional files when running it). Do not rename
+the DLL or the player name (should be "ZZZKBot" and do not change the case-
+sensitivity).
 
 As mentioned above, ZZZKBot runs using BWAPI version 4.1.2, and is only
-supposed to play as Zerg in the AIIDE 2016 Starcraft AI competition. It does
-not use BWTA2/BWTA. ZZZKBot itself does not use disk I/O (i.e. has no logic
-to read or write files - not even log files), apart from any logic already
-built into BWAPI (if any). It tailors its behaviour to particular
-opponents based on in-game player names of the opponent bot(s).
+supposed to play as Zerg in the CIG 2017 Starcraft AI competition. It does
+not use BWTA2/BWTA. ZZZKBot uses disk I/O (i.e. has logic to read and write
+files) but currently only uses them for logging/record-keeping purposes - it
+does not currently use them for any learning logic. It tailors its behaviour
+to particular opponents based on in-game names of the opponent bot(s).

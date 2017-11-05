@@ -1,4 +1,4 @@
-// Copyright 2016 Chris Coxe.
+// Copyright 2017 Chris Coxe.
 // 
 // ZZZKBot is distributed under the terms of the GNU Lesser General
 // Public License (LGPL) version 3.
@@ -27,30 +27,46 @@
 
 #pragma once
 #include <BWAPI.h>
+#include <ctime>
 
 // Reminder: don't use "Broodwar" in any global class constructor!
 
 class ZZZKBotAIModule : public BWAPI::AIModule
 {
 public:
-  // Virtual functions for callbacks, leave these as they are.
-  virtual void onStart();
-  virtual void onEnd(bool isWinner);
-  virtual void onFrame();
-  virtual void onSendText(std::string text);
-  virtual void onReceiveText(BWAPI::Player player, std::string text);
-  virtual void onPlayerLeft(BWAPI::Player player);
-  virtual void onNukeDetect(BWAPI::Position target);
-  virtual void onUnitDiscover(BWAPI::Unit unit);
-  virtual void onUnitEvade(BWAPI::Unit unit);
-  virtual void onUnitShow(BWAPI::Unit unit);
-  virtual void onUnitHide(BWAPI::Unit unit);
-  virtual void onUnitCreate(BWAPI::Unit unit);
-  virtual void onUnitDestroy(BWAPI::Unit unit);
-  virtual void onUnitMorph(BWAPI::Unit unit);
-  virtual void onUnitRenegade(BWAPI::Unit unit);
-  virtual void onSaveGame(std::string gameName);
-  virtual void onUnitComplete(BWAPI::Unit unit);
-  // Everything below this line is safe to modify.
+    // Virtual functions for callbacks, leave these as they are.
+    virtual void onStart();
+    virtual void onEnd(bool isWinner);
+    virtual void onFrame();
+    virtual void onSendText(std::string text);
+    virtual void onReceiveText(BWAPI::Player player, std::string text);
+    virtual void onPlayerLeft(BWAPI::Player player);
+    virtual void onNukeDetect(BWAPI::Position target);
+    virtual void onUnitDiscover(BWAPI::Unit unit);
+    virtual void onUnitEvade(BWAPI::Unit unit);
+    virtual void onUnitShow(BWAPI::Unit unit);
+    virtual void onUnitHide(BWAPI::Unit unit);
+    virtual void onUnitCreate(BWAPI::Unit unit);
+    virtual void onUnitDestroy(BWAPI::Unit unit);
+    virtual void onUnitMorph(BWAPI::Unit unit);
+    virtual void onUnitRenegade(BWAPI::Unit unit);
+    virtual void onSaveGame(std::string gameName);
+    virtual void onUnitComplete(BWAPI::Unit unit);
+    // Everything below this line is safe to modify.
 
+    const std::string startOfLineSentinel = "||->";
+    const std::string endOfLineSentinel = "<-||";
+    const std::string startOfUpdateSentinel = "|->";
+    const std::string endOfUpdateSentinel = "<-|";
+
+    const std::string delim = "\t";
+
+    const std::string initUpdateSignifier = "init";
+    const std::string raceScoutedUpdateSignifier = "raceScouted";
+    const std::string onEndUpdateSignifier = "onEnd";
+
+    int enemyPlayerID = -1;
+    std::string enemyWriteFilePath;
+
+    std::time_t timerAtGameStart = std::time(nullptr);
 };

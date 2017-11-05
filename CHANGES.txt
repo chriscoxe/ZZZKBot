@@ -1,7 +1,14 @@
 ZZZKBot - Changes
 =================
 
-Updated:    7th September 2016
+Updated:    16th July 2017
+
+
+Version 1.4.0: version submitted on 16th July 2017 for the CIG 2017
+Starcraft AI competition.
+
+Version 1.3: version submitted on 19th December 2016 for the SSCAIT 2016
+Starcraft AI competition.
 
 Version 1.2: version submitted on 7th September 2016 for the AIIDE 2016
 Starcraft AI competition. See file "SCAI2016_ENTRY.txt" for submission
