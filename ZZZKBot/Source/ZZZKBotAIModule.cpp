@@ -166,7 +166,7 @@ void ZZZKBotAIModule::onFrame()
     // will be called (probably multiple times) with getFrameCount() returning 1000 and
     // isPaused() returning true. Then when it becomes unpaused, onFrame() will be called
     // exactly once with getFrameCount() returning 1000 and isPaused() returning false. Then
-    // execution continues. When onFrame() is called again, getFCrameCount() will be a
+    // execution continues. When onFrame() is called again, getFrameCount() will be a
     // higher frame count than 1000. So the following logic is correct, i.e. we will not
     // accidentally skip a frame by always returning when isPaused() is true.
     if (Broodwar->isReplay() || Broodwar->isPaused() || !Broodwar->self())
