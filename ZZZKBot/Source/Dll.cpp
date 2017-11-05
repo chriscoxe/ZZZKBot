@@ -1,4 +1,4 @@
-// Copyright 2015 Chris Coxe.
+// Copyright 2016 Chris Coxe.
 // 
 // ZZZKBot is distributed under the terms of the GNU Lesser General
 // Public License (LGPL) version 3.

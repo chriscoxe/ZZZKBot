@@ -1,7 +1,24 @@
 ZZZKBot - Changes
 =================
 
-Updated:    10th October 2015
+Updated:    7th September 2016
+
+Version 1.2: version submitted on 7th September 2016 for the AIIDE 2016
+Starcraft AI competition. See file "SCAI2016_ENTRY.txt" for submission
+details. The instructions to build and install are the same as AIIDE 2015
+except that I inserted this step in INSTALL.txt that I forgot to write in
+AIIDE 2015:
+
+3. If the machine where ZZZKBot will be run does not have Microsoft Visual
+Studio 2013 installed, you will need to install the 32-bit variant of the
+"Visual C++ Redistributable Packages for Visual Studio 2013" if not already
+installed (vcredist_x86.exe (i.e. 32-bit) is only one you need for Windows
+XP). Currently it can be downloaded from Microsoft's website at:
+https://www.microsoft.com/en-au/download/details.aspx?id=40784
+
+
+Version 1.1: version submitted on 24th December 2015 for the SSCAIT 2015
+Starcraft AI competition.
 
 
 Version 1.0: version submitted on 10th October 2015 for the AIIDE 2015

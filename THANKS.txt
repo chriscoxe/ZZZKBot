@@ -1,7 +1,7 @@
 ZZZKBot - Thanks
 ================
 
-Updated:    10th October 2015
+Updated:    7th September 2016
 
 
 This project would not have been possible without the inspiration, prior
@@ -11,7 +11,8 @@ following people/teams, for which the author(s) are very grateful:
     * BWAPI, BWTA, BWSAL, BWMirror, StarcraftTournamentManager project teams.
     * BWAPI IRC, forum, Facebook group contributers.
     * Organisers/administrators for competitions/tournaments/ladders/servers
-      such as AIIDE, CIG, SSCAI, and Krasi's ladder.
+      such as AIIDE, CIG, SSCAI, Krasi's ladder, and Martin Rooijackers'
+      tournaments.
     * Botters/researchers that made their source code & research/papers
       available.
     * Blizzard, for making it all possible.
