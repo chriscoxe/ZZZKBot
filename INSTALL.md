@@ -30,17 +30,17 @@ Note: ZZZKBot is intended to support being run on Windows 7 SP1 (later versions 
 
 1. Install and run the DLL with BWAPI version 4.2.0 as you would normally do for any other BWAPI AIModule bot that uses the "bwapi-data/read" and "bwapi-data/write" folders, e.g. copy the DLL to the following folder (create parent folders if necessary):
 
-   <Starcraft folder>/bwapi-data/AI/
+   \<Starcraft folder\>/bwapi-data/AI/
 
    and ensure that the following folders exist:
 
-   <Starcraft folder>/bwapi-data/read/
+   \<Starcraft folder\>/bwapi-data/read/
    
-   <Starcraft folder>/bwapi-data/write/
+   \<Starcraft folder\>/bwapi-data/write/
 
    and configure its path via the "ai" setting in:
 
-   <Starcraft folder>/bwapi-data/bwapi.ini
+   \<Starcraft folder\>/bwapi-data/bwapi.ini
 
    then run a launcher such as ChaosLauncher as Administrator and inject as usual, etc.
 
