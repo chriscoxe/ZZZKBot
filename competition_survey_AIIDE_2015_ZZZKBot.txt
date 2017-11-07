@@ -1,0 +1,89 @@
+Bot Name: ZZZKBot
+Bot Race: Zerg
+Author Name(s): Chris Coxe
+Affiliation(s): Independent
+Nationality(s): Australia, Britain
+Occupation(s): Software Engineer/Developer
+
+(These will be listed on the competition website)
+Bot URL: https://github.com/chriscoxe/ZZZKBot
+Personal URL: https://au.linkedin.com/in/chriscoxe
+Affiliation URL: N/A
+
+Q: How did you become interested in Starcraft AI?
+
+I have always loved the game of Starcraft. I have been interested in Starcraft AIs ever since I first heard they existed via posts on the slashdot forum. The main post I recall was a link to an article about how the Berkeley Overmind bot won the 2010 Starcraft AI competition.
+
+Q: How long have you been working on your bot?
+
+I started writing ZZZBot in mid July 2015 for CIG 2015. I worked on it sporadically until the CIG 2015 submission deadline (13/8/2015), then on 28/9/2015 I started working on it again for AIIDE 2015 by renaming it to ZZZKBot, tidying it up and making a few improvements (the only major change was to add a speedling build order against some opponents) and submitted it on 10/10/2015. ZZZBot (which became ZZZKBot) was my first competitive bot, but before that I had tinkered with BWAPI (see below), which helped me to learn BWAPI and the game mechanics.
+
+Q: About how many lines of code is your bot?
+
+Not including the VCXPROJ file and TXT documentation files, the source code is 2237 or 2927 lines depending on whether you include blank lines / commented-out code / other lines that are only comments. There's quite a lot of source code duplication because I wrote it in a hurry and was planning to throw away the source code when I wrote it (ZZZBot for CIG 2015 was only intended to be a simple throw-away proof of concept bot), and I haven't got around to tidying it up much.
+
+Q: Why did you choose the race of your bot?
+
+When I started writing the bot I wrote a simple strategy that used very early aggression as all three races. I was surprised how effective the initial zerglings were, even against some existing strong bots. For CIG 2015 I never really thought of switching to a different race than Zerg because the 4pool strategy seemed so effective, and it didn't occur to me that I might be allowed to play as Random race. After CIG 2015 I found out that Random race has always been allowed in AIIDE, and SSCAIT recently added support for Random, but I don't know whether the CIG competitions or Krasi's ladder allow Random. When I started making changes for AIIDE 2015, I decided to stick with Zerg rather than switching to Protoss or Terran or Random because with only 13 days until the competition deadline, I thought my time would be better spent improving the Zerg logic.
+
+Q: Did you use any existing code as the basis for your bot? If so, why, and what did you change?
+
+No - I just started with the BWAPI version 4.1.2's ExampleAIModule project and modified it. I didn't get around to using a library such as BWTA2/BWTA for terrain info.
+
+Q: What is the overall strategy/strategies of your bot? Why did you choose them?
+
+Extracts from the SCAI2015_ENTRY.txt file included in the submission: "A simple throw-away proof-of-concept cheesy kamikaze 4-pool bot implemented in a short amount of time to reach low-hanging fruit. Effective against many bots that do not have a solid opening economy/defence. Has some simple logic for scouting, targeting and resource-gathering. Apart from targeting its micro is very limited. Stays at 9 or 10 supply until about 15 minutes in-game time then techs straight to guardians (on only 1 base... soon runs out of gas...) in an attempt to finish off static defences of idle opponents, and mutalisks in an attempt to destroy lifted buildings. Uses speedling build against some opponents. Doesn't do much else. ZZZKBot is an improved and heavily refactored version of ZZZBot (ZZZBot won first rank in the CIG 2015 Starcraft AI competition).". "Implemented in a quick and dirty fashion so releases would be ready for the CIG & AIIDE 2015 Starcraft AI competitions".
+
+See above for how I started using the 4pool strategy. Before I started writing the bot, my original plan was to implement a range of initial build orders/strategies and experiment to see which strategies were most effective against various opponents. After I had added some logic for overlord scouting and enemy unit targeting, the 4pool strategy seemed so effective even on 3 or 4 player maps that it seemed my time would be better spent improving the 4pool strategy and making it more resilient than completely changing the strategy or using disk I/O for learning which strategy to use against each enemy bot. There didn't seem to be much gain in adding much logic for transitioning out of the 4pool strategy to other units because if 4pool fails you are probably going to lose very quickly if the opponent is any good. I decided to continue kamikaze'ing zerglings to keep up the pressure in case it slowly wears down the opponent or in case the opponent makes a bad decision to transition out of their strategy (some bots including mine use hard-coded frame numbers as thresholds). I did, however, add logic to make it transition after a threshold of 15 in-game minutes to mutalisks then guardians in case all that is left of the enemy is static defence or lifted buildings. There is only so much you can do to improve the 4pool strategy though, so after CIG 2015 I tried a speedling build order which I hoped might be more effective against some opponents. In this strategy, it only starts sending zerglings out when the metabolic boost research finishes, then not long afterwards it transitions to mutalisks, then transitions to guardians if any mutalisks die. As I said, apart from targeting its micro is very limited - I didn't get around to working on it. Combat units simply keep attacking something. I didn't get around to adding any logic to make them kite or retreat or regroup or avoid dangerous threats to themself like static defences.
+
+Q: Do you incorporate learning of any form in your bot? If so, how was it accomplished?
+
+No - I didn't get around to working on it.
+
+Q: Do you use any interesting AI techniques or algorithms in your bot? If so, which?
+
+No. My original development approach was to focus on the basics and reach low-hanging fruit before moving on to more sophisticated stuff, and as it turned out there was more than enough to work on before getting around to anything more sophisticated.
+
+Q: What do you feel are the strongest and weakest parts of your bot's overall performance?
+
+It's a cheesy one-trick pony. All it can do is 4pool or speedling rush. Its only strength lies in the fact that many existing bots are vulnerable to cheesy builds like this.
+
+Q: If you competed in previous tournaments, what did you change for this year's entry?
+
+I didn't compete in AIIDE 2014, but I competed in CIG 2015 which occurred shortly before AIIDE 2015. The strategy changes I made between CIG 2015 and AIIDE 2015 were to add a speedling build order against some opponents, and various minor improvements, tweaks and bugfixes that are not very note-worthy.
+
+Q: Have you tested your bot against humans? If so, how did it go?
+
+No.
+
+Q: Any fun or interesting stories about the development / testing of your bot?
+
+Before I started writing a competitive bot, while I was tinkering with BWAPI for the first time, I wrote a bot just for experimentation purposes. It identifies all allowed unit commands for all my units every 3 in-game seconds and issues one out of all of those commands at random. For commands that take arguments, it picked argument value(s) from among the allowed argument values at random, e.g. it only issues a build command for buildable locations. It was able to issue every possible command in the game that was allowed at that moment, including all spells and abilities. It was useless competitively of course but it was interesting to watch it on full speed playing against itself, especially if I helped it by making a few extra workers for it at the start. It would slowly build its base up (including gathering minerals, making a refinery and gathering gas), train units, research/upgrade, and have strange skirmishes with enemy units.  When playing by itself, at some point it would inevitably wipe itself out by attacking its own buildings with workers or zerglings or marines or air units or whatever. On test maps where you start with lots of late-game units it was interesting to watch it cast all kinds of spells and abilities etc on its own units and enemy units, load and unload units, lift and move and land Terran buildings, nuke/storm itself, make hallucinations, mind control critters etc.
+
+Q: Any other projects you're working on that you'd like to advertise?
+
+Not at present.
+
+Optional Opinion Questions:
+
+Q: What is your opinion on the current state of StarCraft AI? How long do you think before computers can beat humans in a best-of-7 match?
+
+I have no idea whether or when they will start winning.
+
+A lot of traditional game AIs (for simple games anyway) and machine learning problem AIs can be tested within a split second to get a decent estimate of how strong they are. Unfortunately, currently, a single bot-vs-bot game of Starcraft can typically take roughly 30 real-world seconds at full speed. To get a decent idea of how strong a bot is, you need to test it against many other bots, preferably on a variety of maps. Also enemy bots can learn between games, so a strategy that was very successful in the first few games may not be very successful at all after the enemy bot has played enough games. Against opponent bots that learn slowly, it could take dozens or even hundreds of games before it starts to become clear that a strategy that was effective ininitally isn't going to be effective in the long-term. If both bots are able to learn between games then the results may be very chaotic initially and may take many games for the win percentage to stabilize (or it may never stabilize in the worst case, although this is very unlikely) because they may each react to each other's adjustments between games. Currently, there are no quick and accurate ways to simulate Starcraft games (and Broodwar's source code hasn't been released). Consequently, learning techniques can only learn at that pace, and similarly for the development cycle in general.
+
+Humans are very good at identifying new kinds of weakness that have not been identified before and quickly and effectively exploiting them, whereas AIs are currently very bad at this. In Starcraft for the bots available currently (for CIG 2015 anyway - I can't speak for AIIDE 2015 because the results aren't available yet), as a human it is often easy to use a simple tactic (e.g. lure) or a simple technique (e.g. walling) or a simple hard-counter strategy (e.g. a particular opening build order) to consistently beat a particular bot. Once the word gets out about a bot's weaknesses, it isn't long before humans are able to consistently/always beat it, even quite weak human players. Of course, the bot's author might later be able to make a change to remove the weakness, then humans will look for other/new weaknesses...
+
+At present, it wouldn't surprise me if a bot might occasionally beat a strong knowledgeable Starcraft player within a few years from now if they aren't used to playing against bots, or didn't know anything about the bot beforehand and the bot is adept at some cheesy strategies that took them by surprise with a little luck as a once-off. This might tend to happen if the bot plays as Random race on large maps and the human was often unlucky when scouting. I'm sure if the human prepares by playing against the same version of the bot beforehand they will soon notice a weakness and be able to exploit it and learn how to beat the bot before they actually play in the tournament.
+
+That said, if it does happen soon that the same version of a bot beats several strong knowledgeable human players consistently and continuously even if the humans prepare by playing against it, which I doubt, I would guess that the bot would be exploiting a human's limited multi-tasking ability and limited APM. It might make use of the bot's high APM, especially in cheap tactical tricks that are difficult or time consuming for a human to do but effective for a bot to do (e.g. splitting units against splash damage, unloading and loading units vs units that fire projectiles so they miss). It might rely on the ability of a bot to do multi-pronged attacks and constantly harass multiple bases at once, with fast units that kite and are positioned and manouvered well to avoid taking damage. This might force the human to focus on defending and micro, leaving the human with little time to spend on attacking/macroing/scouting/expanding/improving their economy. This might enable the bot to gain map control and expand all over the map, then dominate or starve the human. As prior research has shown, a bot is also able to get a slight economic advantage by improving the control of gatherers to reassign gatherers to mineral patches that have better round trip times. This might eventually tip the balance in the bot's favor in some games, due to the snowball effect.
+
+Q: What do you feel is the biggest hurdle (technological or otherwise) in improving your bot's AI?
+
+When I first started tinkering with BWAPI, the main hurdle was learning what Starcraft does under the covers (e.g. what the effects are exactly when you issue the various kinds of unit commands, and pathfinding), learning what BWAPI can and can't do and how to use it, e.g. Starcraft game mechanics like how the latency frames system works, understanding the attack animation frame system, game/unit state attribute accessibility, and pitfalls such as needing to prevent spamming attack commands. Since then there have been some great tutorials/blogs made available that would have helped me then, and it is easier to write bots now.
+
+Now, the main concern for me is being able to increase the number of games played per hour when testing with the hardware I have available so that after I make a change to my bot, I can more quickly get feedback for how the change affected its strength (and any significant effects e.g. matchups or maps it is now much stronger or much weaker for) by testing the bot against more other bots and/or on a wide range of maps and/or playing more games (and playing many more games against bots that use inter-game learning than against bots that don't). The game rate is already fast for a small network of VMs using StarcraftTournamentManager and I doubt it can be sped up much further or made much more efficient for the hardware I have available (because Broodwar's game engine logic still needs to run for every frame), and I doubt an accurate simulator for Starcraft:Broodwar 1.16.1 that is faster than the original will be available any time soon. Adding more computing power by adding more machines/VMs would help a lot because the testing can be quite scalably parallelized (at least until inter-game learning effects start to become a limiting factor anyway).
+
+Q: Which bots are the most interesting to you and why?
+
+Any bots that use learning techniques and try to minimize hand-crafting as a design approach, because it is more interesting and inspiring to see bots learning for themselves, and they may come up with novel ways of solving problems and playing Starcraft that nobody has thought of yet (e.g. I gather that the 7 roach rush build order in Starcraft 2 was found using a genetic algorithm, although of course I can't guarantee that a human didn't think of it first).

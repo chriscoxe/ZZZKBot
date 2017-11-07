@@ -1,7 +1,7 @@
 ZZZKBot - Thanks
 ================
 
-Updated:    1st September 2017
+Updated:   7th November 2017
 
 
 This project would not have been possible without the inspiration, prior
@@ -35,5 +35,6 @@ In particular, the following individuals:
     * bluevoid
     * pawngame10
     * Michal Kovarik
+    * Jaj22
 
 =============================== End of file ================================

@@ -1,15 +1,17 @@
 ZZZKBot - ReadMe
 ================
 
-Updated:    1st September 2017
+Updated:    7th November 2017
 
 
-ZZZKBot is a bot for Starcraft: Broodwar. It is designed to compete against
-other bots. It is not designed to compete against humans - everyone except
-possibly very weak players should have very little trouble beating it. It
-uses BWAPI as an API for interacting with Starcraft: Broodwar. See
+ZZZKBot is a bot (AI) for Starcraft: Broodwar. It is designed to compete
+against other bots. It is not designed to compete against humans. It uses
+BWAPI as an API for interacting with Starcraft: Broodwar. See
 AIIDE2017_ENTRY.txt for more information about the (1.5.0) version that was
 submitted for the 2017 AIIDE Starcraft AI competition.
+
+I am not intending to support/maintain/develop ZZZKBot in future, although I
+haven't ruled it out either. See BUGS.txt.
 
 Some things to know about ZZZKBot:
 ----------------------------------

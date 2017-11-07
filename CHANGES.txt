@@ -4,6 +4,44 @@ ZZZKBot - Changes
 Updated:    1st September 2017
 
 
+Version 1.7.0
+-------------
+Version uploaded to SSCAIT bot name "Chris Coxe" on 7th November 2017,
+solely because some people wanted a more up-to-date version of ZZZKBot on
+SSCAIT that works on any map and works when playing as any player name. I
+am not intending to support/maintain/develop ZZZKBot in future and am not
+intending to compete in SCAIT 2017, although I haven't ruled either of them
+out either. This is just a release to allow people to more easily train
+their bots against ZZZKBot on their own environments and on SSCAIT/CIG/other
+maps. It is not as strong as the AIIDE 2017 or CIG 2017 versions of ZZZKBot
+because the hardcoded default strategy parameter values for opponents were
+removed in v1.6.0. If it is used in SSCAIT 2017 or other future
+competitions, I doubt it will do very well because of that, and also because
+so few games are played in SSCAIT compared with AIIDE/CIG, so it doesn't
+have much opportunity to learn before or during SSCAIT 2017. The changes in
+this version are that it is now fixed so it works properly on any map and
+when playing as any player name (thanks Jaj22!), added hardcoded creep
+locations for SSCAIT & CIG maps, added special logic and fixes for Plasma
+map (was included in CIG 2017 version), added ability to use an optional
+config file to tailor strategy parameter values to opponents (the file
+shouldn't exist by default), fixes/improvements to the buggy learning logic
+that was causing it to learn unnecessarily slowly, fixed a problem relating
+to the learning logic where the bot was getting stuck waiting forever for a
+sunken to be made when particular combinations of strategy parameter values
+were being used, minor updates to TXT file documentation (including adding
+old competition survey answers), added comments for map names and versions
+etc (incl. AIIDE, SSCAIT, CIG maps) for clarity, added some comments to
+explain some logic, added some old commented-out code just FTR.
+
+Version 1.6.0
+-------------
+Version uploaded to SSCAIT bot name "Chris Coxe" on 1st November 2017,
+solely because some people wanted a more up-to-date version of ZZZKBot on
+SSCAIT. The changes are that my player name was fixed for SSCAIT, added
+support for SSCAIT maps (thanks Jaj22!) (creep location info is still
+missing though), increased the file format version number from 1.5.0 to
+1.6.0, removed all references to other AIIDE 2017 player names.
+
 Version 1.5.0
 -------------
 Version submitted on 1st September 2017 for the 2017 AIIDE Starcraft AI

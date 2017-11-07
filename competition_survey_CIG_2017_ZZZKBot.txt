@@ -1,0 +1,114 @@
+2017 IEEE CIG StarCraft AI Competition
+
+* Required
+
+Participant Information
+
+Seed Number *
+	Please input any "Natural Number". We will use this number as Random Seed.
+956645
+
+Entry Name *
+ZZZKBot
+
+Contact Person Name *
+Chris Coxe
+
+Contact Email Adress *
+chris (dot) coxe (at) gmail (dot) com
+
+Affiliation(s)
+Independent
+
+Nationality(s)
+Australia and Britain
+
+Occupation(s) *
+Software Engineer/Developer
+
+Bot URL
+https://github.com/chriscoxe/ZZZKBot
+
+Personal URL
+https://www.linkedin.com/in/chriscoxe
+
+Affiliation URL
+
+Bot Information
+
+Recommend to check "Rules (https://sites.google.com/site/starcraftaic/rules)"
+
+Race *
+	Zerg
+	Terran
+	Protoss
+	Random
+
+Zerg
+
+BWAPI Version *
+	ver 3.7.4
+	ver 4.0.1B
+	ver 4.1.0B
+	ver 4.1.2
+	ver 4.2.0
+
+ver 4.1.2 or maybe 4.2.0 (actually ended up using 4.1.2)
+
+File Type *
+	DLL
+	ProxyBot
+
+DLL
+
+Using File I/O *
+	Use
+	Non Use
+
+Use
+
+Additional information
+
+Questions come from "AIIDE StarCraft AI Competition Registration Questionnaire"
+
+How did you become interested in StarCraft AI? *
+Please use what I wrote last year.
+
+How long have you been working on your bot? *
+Please use what I wrote last year.
+
+About How many lines of code is your bot? *
+Please use what I wrote last year.
+
+Why did you choose the race of your bot? *
+Please use what I wrote last year.
+
+Did you use any existing code as the basis for your bot? If so, why, and what did you change? *
+Please use what I wrote last year.
+
+What is the overall strategy/strategies of your bot? Why did you choose them? *
+Same approach as previous versions, i.e. tailor some simple 1-base build orders to some opponents based on their player name.
+
+Do you incorporate learning of any form in your bot? If so, how was it accomplished? *
+No.
+
+Do you use any interesting AI techniques or algorithms in your bot? If so, which? *
+Please use what I wrote last year.
+
+What do you feel are the strongest and weakest parts of your bot's overall performance? *
+Please use what I wrote last year.
+
+If you competed in previous tournaments, what did you change for this year's entry? *
+Apart from changes already seen in AIIDE2016 and SSCAIT2016, only minor improvements since SSCAIT2016 that aren't very noteworthy.
+
+Have you tested your bot against humans? If so, how did it go? *
+Please use what I wrote last year.
+
+Any fun or interesting stories about the development / testing of your bot? *
+Please use what I wrote last year.
+
+Any other projects you're working on that you'd like to advertise? *
+Please use what I wrote last year.
+
+Any other description about your AI bot
+None.
