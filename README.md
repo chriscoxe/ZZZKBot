@@ -4,9 +4,9 @@
 
 ZZZKBot is a bot (AI) for Starcraft: Broodwar. It is designed to compete against other bots. It is not designed to compete against humans. It uses BWAPI as an API for interacting with Starcraft: Broodwar. See AIIDE2017_ENTRY.txt for more information about the (1.5.0) version that was submitted for the 2017 AIIDE Starcraft AI competition.
 
-## Plans
+## Project Status
 
-I am not intending to support/maintain/develop ZZZKBot in future, although I haven't ruled it out either. See BUGS.md.
+I am not intending to support/maintain/develop ZZZKBot in future, although I haven't ruled it out either. See [BUGS.md](BUGS.md).
 
 ## Some things to know about ZZZKBot
 
@@ -15,6 +15,30 @@ I am not intending to support/maintain/develop ZZZKBot in future, although I hav
 * The other libraries it depends on are as follows (their dependencies are not listed):
   * [BWAPI](https://github.com/bwapi/bwapi/)
     * BWAPI is an API for interacting with Starcraft: Broodwar. Starcraft and Starcraft: Broodwar are trademarks of Blizzard Entertainment. BWAPI is a third party "hack" that violates the End User License Agreement (EULA). BWAPI uses the "GNU Lesser General Public License (LGPL) version 3" license.
+
+## License
+
+See [LICENSE.txt](LICENSE.txt).
+
+## Authors
+
+See [AUTHORS.md](AUTHORS.md).
+
+## Reporting Bugs
+
+See [BUGS.md](BUGS.md).
+
+## Release Notes / Version List / Change Log
+
+See [CHANGES.md](CHANGES.md).
+
+## Installation Instructions
+
+See [INSTALL.md](INSTALL.md).
+
+## Thanks
+
+See [THANKS.md](THANKS.md).
 
 ## Why do I write Starcraft bots/AIs?
 
