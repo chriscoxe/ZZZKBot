@@ -2,7 +2,7 @@
 
 ## Description
 
-ZZZKBot is a bot (AI) for Starcraft: Broodwar. It is designed to compete against other bots. It is not designed to compete against humans. It uses BWAPI as an API for interacting with Starcraft: Broodwar. See AIIDE2017_ENTRY.txt for more information about the (1.5.0) version that was submitted for the 2017 AIIDE Starcraft AI competition.
+ZZZKBot is a bot (AI) for Starcraft: Broodwar. It is designed to compete against other bots. It is not designed to compete against humans. It uses BWAPI as an API for interacting with Starcraft: Broodwar. See [AIIDE2017_ENTRY.txt](AIIDE2017_ENTRY.txt) for more information about the (1.5.0) version that was submitted for the 2017 AIIDE Starcraft AI competition.
 
 ## Project Status
 
@@ -50,7 +50,7 @@ So far, I've been working on my Starcraft bot sporadically just before competiti
 
 ## Starcraft AI Progress/Status
 
-For my competition survey answers about developing Starcraft AIs, see the text files such as competition_survey_AIIDE_2017_ZZZKBot.txt.  Here are some general thoughts on the status and future progress of Starcraft AIs:
+For my competition survey answers about developing Starcraft AIs, see the text files such as [competition_survey_AIIDE_2017_ZZZKBot.txt](competition_survey_AIIDE_2017_ZZZKBot.txt).  Here are some general thoughts on the status and future progress of Starcraft AIs:
 
 The state of Starcraft AI at the time of writing (7th November 2017) is that it is still very narrow AI, even just within the game of Starcraft. By that, I mean that Starcraft bots currently still use a non-trivial amount of hard-coded logic and list/definition of features designed by humans just to enable a machine learning (ML) algorithm to be applied effectively (as opposed to the deep learning algorithm used by DeepMind's AlphaGo Zero program), and no one ML algorithm is being used yet to perform every kind of task that a player needs to perform in Starcraft in order to be able to be able to play the full game and be successful competitively.  By "tasks", I mean tasks like micromanaging individual or small groups of combat units, making more combat units and workers and buildings, deciding what the composition of your army should be, deciding what buildings to construct and where to place them, deciding what path each unit should move in, scouting to see what the enemy is doing and making use of that information, making more bases, harrassing the enemy's bases, managing large battles, deciding where to attack and defend, special tactics, and decision making relating to long term strategy.
 
