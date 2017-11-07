@@ -6,7 +6,7 @@ ZZZKBot is a bot (AI) for Starcraft: Broodwar. It is designed to compete against
 
 ## Plans
 
-I am not intending to support/maintain/develop ZZZKBot in future, although I haven't ruled it out either. See BUGS.txt.
+I am not intending to support/maintain/develop ZZZKBot in future, although I haven't ruled it out either. See BUGS.md.
 
 ## Some things to know about ZZZKBot
 
