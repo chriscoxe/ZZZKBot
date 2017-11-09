@@ -51,6 +51,29 @@ See [THANKS.md](THANKS.md).
 * Website: [https://chriscoxe.github.io/ZZZKBot/](https://chriscoxe.github.io/ZZZKBot/)
 * Repository: [https://github.com/chriscoxe/ZZZKBot](https://github.com/chriscoxe/ZZZKBot)
 * Releases: [https://github.com/chriscoxe/ZZZKBot/releases](https://github.com/chriscoxe/ZZZKBot/releases)
+* Liquipedia page: [http://wiki.teamliquid.net/starcraft/ZZZKBot](http://wiki.teamliquid.net/starcraft/ZZZKBot)
+* StarcraftAI.com page: [http://www.starcraftai.com/wiki/ZZZKBot](http://www.starcraftai.com/wiki/ZZZKBot)
+
+## Competition Results
+
+### ZZZKBot Competition Results
+
+| Date | Rank | Prize Pool | Winnings | Result | Event | Type | Category |
+| --- | --- | --- | --- | --- | --- | --- | -- |
+| 2017-10-31 | N/A | | | Lost 0:1 vs [Stork](http://wiki.teamliquid.net/starcraft/Stork), <br> won 1:0 vs two amateurs | Sejong University showmatches ([press](https://www.technologyreview.com/s/609242/humans-are-still-better-than-ai-at-starcraftfor-now/)) | Man-vs-Machine | Full game |
+| 2017-10-09 | 1/28 | | | 83.11% | [AIIDE2017](http://wiki.teamliquid.net/starcraft/AIIDE) ([details](https://www.cs.mun.ca/~dchurchill/starcraftaicomp/2017/), [press](https://www.wired.com/story/facebook-quietly-enters-starcraft-war-for-ai-bots-and-loses/)) | Bot-vs-Bot | Full game |
+| 2017-08-24 | 1/20 | USD 1000 | USD 500 but ineligible (not a student or young professional) | 75.40% | [CIG2017](http://wiki.teamliquid.net/starcraft/CIG) ([details](https://cilab.sejong.ac.kr/sc_competition/?cat=17)) | Bot-vs-Bot | Full game |
+| 2016-12-18 | 4/45 in round robin phase, <br> quarterfinalist in elimination phase | | | 88% (i.e. 4th) in round robin phase, <br> elimination phase: lost 0:2 vs [Iron](http://bwem.sourceforge.net/Iron.html) in Quarterfinals | [SSCAIT2016](http://wiki.teamliquid.net/starcraft/SSCAIT2016) ([details](http://www.sscaitournament.com/index.php?action=2016)) | Bot-vs-Bot | Mixed division (i.e. non students) |
+| 2016-10-14 | 2/21 | | | 85.05% | [AIIDE2016](http://wiki.teamliquid.net/starcraft/AIIDE) ([details](https://www.cs.mun.ca/~dchurchill/starcraftaicomp/2016/)) | Bot-vs-Bot | Full game |
+| 2016-09-23 | 4/16 | USD 1000 | USD 0 | 53.08% (4th) in final phase, <br> 69.18% (7th) in qualifier phase | [CIG2016](http://wiki.teamliquid.net/starcraft/CIG) ([details](https://sites.google.com/site/starcraftaic/result)) | Bot-vs-Bot | Full game |
+| 2016-01-30 | 4/42 | | | 84.44% (i.e. 4th), <br> Elimination phase: lost 2:1 vs [KillerBot](http://wiki.teamliquid.net/starcraft/Killerbot) in Semifinals, <br> lost 0:2 vs [Stone](http://wiki.teamliquid.net/starcraft/Stone) in Bronze match | [SSCAIT2015](http://wiki.teamliquid.net/starcraft/SSCAIT2015) ([details](http://www.sscaitournament.com/index.php?action=2015), [history](http://www.cs.mun.ca/~dchurchill/starcraftaicomp/history.shtml)) | Bot-vs-Bot | Mixed division (i.e. non students) |
+| 2015-11-17 | 2/22 (or 1/22?) | | | 87.83% (officially announced as a statistical tie for 1st place), <br> lost 0:2 vs [Djem5](http://wiki.teamliquid.net/starcraft/Djem5) in [man-vs-machine games](http://www.cs.mun.ca/~dchurchill/starcraftaicomp/report2015.shtml#mvm) | [AIIDE2015](http://wiki.teamliquid.net/starcraft/AIIDE2015) ([details](https://www.cs.mun.ca/~dchurchill/starcraftaicomp/2015/), [report](http://www.cs.mun.ca/~dchurchill/starcraftaicomp/report2015.shtml), [history](http://www.cs.mun.ca/~dchurchill/starcraftaicomp/history.shtml)) | Bot-vs-Bot (plus misc man-vs-machine games) | Full game |
+
+### ZZZBot Competition Results
+
+| Date | Rank | Prize Pool | Winnings | Result | Event | Type | Category |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 2015-09-02 | 1/14 | USD 1000 | USD 500 | 81.03% | [CIG2015](http://wiki.teamliquid.net/starcraft/CIG2015) ([details](https://cilab.sejong.ac.kr/sc_competition2015/#Results), [history](http://www.cs.mun.ca/~dchurchill/starcraftaicomp/history.shtml)) | Bot-vs-Bot | Full game |
 
 ## Why do I write Starcraft bots/AIs?
 
