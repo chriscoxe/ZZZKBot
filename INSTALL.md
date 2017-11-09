@@ -26,7 +26,7 @@ Note: ZZZKBot is intended to support being run on Windows 7 SP1 (later versions 
 
 1. The only file required is the DLL named ZZZKBot.dll from the "Release" folder. ZZZKBot does not need any other files to run, but note that it uses files in the "bwapi-data/read" and "bwapi-data/write" folders. Do not rename the DLL or the player name (should be "ZZZKBot"). Do not change the case-sensitivity of these letters.
 
-1. If the machine where ZZZKBot will be run does not have Microsoft Visual Studio 2017 installed, you will need to install the 32-bit variant of the "Microsoft Visual C++ Redistributable for Visual Studio 2017" if not already installed (VC_redist_x86.exe (i.e. 32-bit) is only one you need for Windows 7 SP1). Currently it can be downloaded from Microsoft's website at https://www.visualstudio.com/downloads/ - be sure to install the x86 variant (the x64 variant is irrelevant).
+1. If the machine where ZZZKBot will be run does not have Microsoft Visual Studio 2017 installed, you will need to install the 32-bit variant of the "Microsoft Visual C++ Redistributable for Visual Studio 2017" if not already installed (VC_redist_x86.exe (i.e. 32-bit) is only one you need for Windows 7 SP1). Currently it can be downloaded from Microsoft's website at [https://www.visualstudio.com/downloads/](https://www.visualstudio.com/downloads/) - be sure to install the x86 variant (the x64 variant is irrelevant).
 
 1. Install and run the DLL with BWAPI version 4.2.0 as you would normally do for any other BWAPI AIModule bot that uses the "bwapi-data/read" and "bwapi-data/write" folders, e.g. copy the DLL to the following folder (create parent folders if necessary):
 
