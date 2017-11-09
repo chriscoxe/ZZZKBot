@@ -8,6 +8,12 @@ ZZZKBot is a bot (AI) for Starcraft: Broodwar. It is designed to compete against
 
 I am not intending to support/maintain/develop ZZZKBot in future, although I haven't ruled it out either. See [BUGS.md](BUGS.md).
 
+In the longer term, I am more likely to start a new project than simply keep modifying the ZZZKBot project. I.E. with a different primary goal than just a Zerg bot that beats other bots in competitions.  E.g. beating humans, or playing as other race(s), or a bot that can play Broodwar & SC2, or a bot with much less hand-crafted logic, or write a bot properly from the ground up.  The approach I used to write ZZZKBot was to code it in the quickest possible time, at the expense of quality / attention to detail.
+
+Support/donations/sponsorship or perhaps even job offers (would be my dream job!) to write or help write a "proper" Broodwar or SC2 bot that actually uses some sophisticated AI/ML techniques (perhaps alongside minimal hard-coded logic?), possibly eventually using more appropriate hardware would be helpful, i.e. via https://www.paypal.me/quatari or alternatively add me in LinkedIn but be sure to mention it's about Starcraft AI otherwise I may ignore connection requests.
+
+So far, I've been working on my Starcraft bot sporadically just before competition deadlines just as a hobby, using simple techniques to reach low-hanging fruit against other bots, using my existing personal hardware, but I have been following the Broodwar and SC2 AI scene and papers closely and have a lot of ideas for more sophisticated (and resource-intensive...) AI/ML techniques I would like to experiment with in a bot and would love to work on something more serious/useful/ambitious in Broodwar/SC2 AI.
+
 ## Some things to know about ZZZKBot
 
 * It's open-source, and 100% free - it uses the widely used "GNU Lesser General Public License (LGPL) version 3" license.
@@ -44,11 +50,7 @@ See [THANKS.md](THANKS.md).
 
 Writing a Starcraft bot is a good fit for my interests in problem solving, programming, software engineering, game theory, AI and machine learning, strategy games (Starcraft in particular), and competition. It's a lot of fun, and bot-versus-bot games are often farcical.
 
-Support/donations/sponsorship or perhaps even job offers (would be my dream job!) to write or help write a "proper" Broodwar or SC2 bot that actually uses some sophisticated AI/ML techniques (perhaps alongside minimal hard-coded logic?), possibly eventually using more appropriate hardware would be helpful, i.e. via https://www.paypal.me/quatari or alternatively add me in LinkedIn but be sure to mention it's about Starcraft AI otherwise I may ignore connection requests.
-
-So far, I've been working on my Starcraft bot sporadically just before competition deadlines just as a hobby, using simple techniques to reach low-hanging fruit against other bots, using my existing personal hardware, but I have been following the Broodwar and SC2 AI scene and papers closely and have a lot of ideas for more sophisticated (and resource-intensive...) AI/ML techniques I would like to experiment with in a bot and would love to work on something more serious/useful/ambitious in Broodwar/SC2 AI.
-
-## Starcraft AI Progress/Status
+## Starcraft AIs Progress/Status
 
 For my competition survey answers about developing Starcraft AIs, see the text files such as [competition_survey_AIIDE_2017_ZZZKBot.txt](competition_survey_AIIDE_2017_ZZZKBot.txt).  Here are some general thoughts on the status and future progress of Starcraft AIs:
 
