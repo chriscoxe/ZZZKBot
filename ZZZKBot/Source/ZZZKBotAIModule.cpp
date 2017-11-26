@@ -43,6 +43,7 @@ void ZZZKBotAIModule::onStart()
     Broodwar << "The map is " << Broodwar->mapName() << "!" << std::endl;
 
     // Enable the UserInput flag, which allows us to control the bot and type messages.
+    // COMMENT-OUT THIS STATEMENT FOR COMPETITIONS/LADDERS! Only use it while debugging.
     //Broodwar->enableFlag(Flag::UserInput);
 
     // Uncomment the following line and the bot will know about everything through the fog of war (cheat).
@@ -154,6 +155,26 @@ void ZZZKBotAIModule::onEnd(bool isWinner)
 
 void ZZZKBotAIModule::onFrame()
 {
+    // DISABLE THIS LOGIC FOR COMPETITIONS/LADDERS! Only use it while training.
+    // Feature for speeding up the number of games per hour during training by intentionally
+    // leaving the game if a game is taking too long to finish in terms of real world seconds.
+    // Useful to avoid wasting time against bots that sometimes get into a state where they
+    // are almost always using the full allowable milliseconds per frame, e.g. because they
+    // are using the maximal allowed CPU time during combat simulations for battles, or are
+    // bugged (slow) searching for a valid place to place a building, etc.
+    // The downside is that it will be recorded in the game results as a loss, which affects
+    // the strategy parameter learning logic.
+    /*
+    // Get time now.
+    // Note: localtime_s is not portable but w/e.
+    std::time_t timer = std::time(nullptr);
+    if (timer - timerAtGameStart > 500)
+    {
+        Broodwar->leaveGame();
+        return;
+    }
+    */
+
     // Called once every game frame unless the game is paused in which case it may be called
     // continually.
 
