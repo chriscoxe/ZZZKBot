@@ -4,7 +4,7 @@ This project would not have been possible without the inspiration, prior work, s
 
 * BWAPI, BWTA, BWSAL, BWMirror, StarcraftAITournamentManager, OpenBW project teams.
 * BWAPI IRC, forum, Facebook group contributers.
-* Organisers/administrators for competitions/tournaments/ladders/servers such as AIIDE, CIG, SSCAI, Krasi's ladder, and Martin Rooijackers' tournaments.
+* Organisers/administrators for competitions/tournaments/ladders/servers such as AIIDE, CIG, SSCAI, SAIL, Krasi's old ladder, and Martin Rooijackers' tournaments.
 * Botters/researchers that made their source code & research/papers available.
 * Blizzard, for making it all possible.
 
@@ -21,8 +21,8 @@ In particular, the following individuals:
 * Alberto Uriarte
 * Michal Certicky
 * Krasimir Krystev
-* lowerlogic
+* Luke Perkins ("lowerlogic")
 * bluevoid
 * pawngame10
-* Michal Kovarik
-* Jaj22
+* Michal Kovarik ("kovarex")
+* John Jordan ("jaj22")
