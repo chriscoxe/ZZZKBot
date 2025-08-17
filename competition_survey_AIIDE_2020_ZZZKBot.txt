@@ -24,51 +24,51 @@ There didn't seem to be much gain in adding much logic for transitioning out of 
 
 Q: Did you incorporate any of the following AI techniques in your bot?
    If you did, please be as specific as possible
-   
+
    a) Search-Based AI (Path-Finding, A*, MiniMax, MCTS, etc)
-	 
+
 	 Pasting from AIIDE 2018 survey answers:
-	 
+
 	 Yes: idle workers (and workers that have just returned minerals/gas to the base and are now/still a mineral gatherer) are allocated to unallocated mineral patches near the starting base using a greedy search algorithm which is based on the best worker's total distance between the base and an unallocated mineral patch (most important) plus distance from the worker to that mineral patch (less important). When there are no more unallocated mineral patches available, any remaining idle workers are all simply allocated to the mineral patch that is closest to the base (which will probably make workers bounce around between mineral patches somewhat, although they may settle after a few trips).
 
    b) Offline Machine Learning (Supervised or Unsupervised, but not RL)
 
 	 Paraphrasing from AIIDE 2018 survey answers:
-	 
+
 	 Yes: the hard-coded set of initial creep locations for Zerg bots on the original AIIDE/CoG/SSCAIT maps (but not some of the AIIDE maps that were added later) were incorporated into the ZZZKBot source code after an earlier version of ZZZKBot dumped the tile positions of creep around a zerg base at the start of the game while playing a few games on each of those maps. This information is used when scouting to narrow down the possible starting locations of a zerg opponent. You don't necessarily need to see one of their buildings - you just need to see the creep near it (or the absence of creep where you would expect creep to be if they had started there).
 
-   c) Offline Reinforcement Learning 
-	 
+   c) Offline Reinforcement Learning
+
 	 The prior version did, but this version does not (see part h).
 
    d) Online Learning of any kind (Including competition file IO for strategy selection)
-	 
+
 	 Yes: competition file IO for strategy selection. Details (pasted from AIIDE 2017 survey answers):
-	 
+
 	 ZZZKBot records game info to persistent file I/O via opponent-specific append-only binary (DAT) files in the read/write folders. At the start of each game, ZZZKBot uses the number of wins and number of losses from the corresponding DAT file for that opponent in some simple hard-coded logic to learn/experiment which strategy parameter values to use for the current game. The scenario criteria that are considered which vary in this competition (apart from the opponent and whether they are Protoss/Terran/Zerg/Random race) from least specific to most specific are: the number of start positions in the map, the map hash, my start location. The strategy parameters that are decided are the type of rush to use, the special flags for whether the enemy is expected to forge fast expand or worker rush, and the number of defensive sunken colonies to build (which may vary according to race if the enemy is Random race). If it won the last game in the most specific scenario that matches the current scenario, it will always use the same strategy parameter values. Alternatively (i.e. if it is known to have lost the last game in the most specific scenario that matches the current scenario), if its win rate is >= 80% or it has lost 4 or less games total (i.e. in all scenarios vs that opponent & race) it will use the same strategy parameter values as the lost game, otherwise it will either pick a different combination of strategy parameter values that has won at least once in a less specific scenario that matches the current scenario (if the expected win rate is good enough of a randomly selected (but weighted by win rate) combination of strategy parameter values, excluding the strategy parameter values combo that we just lost for) otherwise it will pick a combination of strategy parameter values at random according to some probability weightings I have pre-defined. Unfortunately there are bugs in this logic (in the AIIDE 2017 version) that cause learning to be unnecessarily slow vs Random race bots, and sometimes (but thankfully quite rarely) causes it to pick a combination of parameter values that were not designed to be used together which cause the bot to get stuck waiting and never building a sunken colony before doing anything such as building more drones/buildings/combat units or attacking, so it becomes extremely passive and probably loses the game.
 
    e) Influence Maps
-	 
+
 	 No.
 
    f) Custom Map Analysis
-	 
+
 	 No online map analysis, but the set of initial creep locations for Zerg bots on the original AIIDE/CoG/SSCAIT maps (but not some of the AIIDE maps that were added later) was incorporated into ZZZKBot as described in part b.
 
    g) Hard-coded or rule-based strategy / tactics
-	 
+
 	 Yes. ZZZKBot is primarily a rule-based bot.
 
    h) Analysis of bots from previous competitions / hard-coded specific bot counter strategies
-	 
+
 	 The prior version did, but this version does not. So, this version is likely to be weaker than the prior version against some particular old bots.
-   
+
    i) Any techniques not mentioned here
-	 
+
 	 Pasting from AIIDE 2017 survey answers:
-	 
+
 	 Most of the decisions in the bot are achieved by simple hard-coded prioritization of the various considerations involved. E.g. the decision for which enemy unit to target is simply distance-based spiral searches with a hard-coded maximum distance threshold specified (via calls to BWAPI's getBestUnit() and getClosestUnit() functions) using simple heuristics mainly based on an ordering of attributes, with units that are in mutual weapon range first, threatening enemy units next, and an ordering of the various enemy unit attributes such as isPowered(), unitType() (the ordering of the various unit types is hard-coded), an estimate of enemy unit life force (a kludge based on HP, shields, armor, defense matrix points if it is defense matrixed), then a bunch of other ordered enemy unit attributes such as whether it is constructing a building. Another example is the decision for which unit to build/train next - a simple ordering is used (i.e. a kludge mainly just the order the various unit command calls appear in the source code) with some heuristics based on what type of rush we are doing, what tech buildings we need, how many drones we have, how many drones have died, how many of the rush unit type have died. Tech transitions are mainly triggered based on how many of our units of a particular unit type have died, or in some cases a hard-coded frame count threshold.
-	 
+
 	 Uses randomization, i.e. selects the combination of strategy parameters values randomly in some cases, and also randomizes each scouting unit's target position after all possible enemy start locations have been scouted and there are no known (landed) enemy buildings (and being more likely to select a target position that is not currently visible than a position that is already visible).
 
 Q: How did you become interested in Starcraft AI?
@@ -167,7 +167,7 @@ AIIDE Specific Question:
 
 Q: Do you feel that the current format of iterated round-robin win percentage
    is a good indicator of bot skill ranking? If not, how would you change it?
-	 
+
 Paraphrasing from AIIDE 2018 survey answers:
 
 If you stick with a competition that only allows one version of each bot (authors can't update their bot at all during the competition) - yes, I think it is fine. To reduce the effect of the "luck" factor for some racial matchups like ZvZ that have a rock-paper-scissors luck factor for the opening build order of the players, perhaps use an odd number of maps (say, 7) rather than an even number, and treat each cycle of maps as a "match" (e.g. a Bo7 but playing all 7 games even if the match result is decided before all 7 games have been played) and count the number of matches won rather than counting the number of games won. Note that this might encourage the mind-game of not playing properly in the remaining games of the match after the match result has been decided, in order not to reveal the strategy the bot would want to use the next time it is trying to win a game.
