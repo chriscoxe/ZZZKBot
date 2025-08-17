@@ -1,10 +1,10 @@
 ZZZKBot - License
 =================
 
-Updated:    1st September 2017
+Updated:    20th January 2019
 
 
-Copyright 2017 Chris Coxe. The program is distributed under the terms of the
+Copyright 2019 Chris Coxe. The program is distributed under the terms of the
 GNU Lesser General Public License (LGPL) version 3.
 
 A copy of the GPL license is provided in file COPYING.txt.

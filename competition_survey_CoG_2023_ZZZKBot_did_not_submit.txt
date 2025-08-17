@@ -1,0 +1,221 @@
+2023 IEEE CoG StarCraft AI Competition
+
+This mail need for responding to your registration. If you complete the submission successfully, the system sends a copy of your submission. You can also edit your submission until the deadline via the link attached in that mail. (We don't care that using the same e-mail with the Contact Email Address in section 3.)
+
+* Indicates required question
+
+Email *
+chris(dot)coxe(plus)ieee(dot)cog(dot)starcraft(dot)ai(dot)competition(at)gmail(dot)com
+
+Register
+
+Registration *
+Only submit if you agree to releasing your source code and data. Additionally, bots might be used for studying StarCraft AI.
+Agree
+
+Participation as entry *
+If you have no plans for submit to future CoG StarCraft AI Competition, we'll participate your bot in future competition as a entry. In this case, we'll announce. But there's no reward, regardless of the result.
+Agree
+
+Participant Information
+
+Entry Name *
+Only alphanumeric characters are allowed (no spaces or strange characters etc). Case sensitive. E.g. ExampleBot. The Entry Name will be used as your bot's in-game player name (and same case-sensitivity). Please don't include version info in this field.
+ZZZKBot
+
+Contact Person (First, Last) *
+Chris Coxe
+
+Contact Email Address *
+chris(dot)coxe(at)gmail(dot)com
+
+Team Members (First, Last) *
+For people working together as a team entry, all past and current team members must be disclosed. You must write a list of their first and last names (or full names), and mention any other individuals/labs/organizations/etc that have contributed significant changes to your source code since the date of last year’s CoG competition submission deadline (or last year’s AIIDE submission deadline if you or your team submitted any entries), e.g. git pull requests or merging changes between your repositories. Working together on versions of projects that your bot uses that were already publicly-released versions such as already released versions of Randomhammer, Steamhammer, CommandCenter, UAlbertaBot, TorchCraft, BWAPI/OpenBW-related libraries, FAP, JFAP, SparCraft, BWEB, BOSS, BWEM, BWTA, BWAPI4J, BWMIRROR is not a problem though.
+Chris Coxe
+
+Affiliation(s) *
+If you have an affiliation, you must disclose it. If you are not affiliated, write "Independent".
+Independent
+
+Dept/lab(s) of Affiliation(s) (if applicable)
+N/A
+
+Nationality(s)
+Australia and Britain
+
+Occupation(s) *
+e.g. Undergraduate, Graduate, Postgraduate student, Researcher, Software Developer/Engineer, Hobbyist.
+Software Engineer/Developer
+
+CoG Cash Prize Eligibility *
+Refer to awarding policy at TBD, i.e. Student or Young Professional or Public. Only pick Student or Young Professional if you are eligible.
+Public
+
+Bot URL
+https://chriscoxe.github.io/ZZZKBot/
+
+Personal URL
+https://www.linkedin.com/in/chriscoxe
+
+Affiliation URL
+N/A
+
+Bot Information
+
+Recommend to check "Rules (https://cilab.gist.ac.kr/sc_competition/?cat=11)"
+
+Race *
+	Zerg
+	Terran
+	Protoss
+	Random
+Random
+
+BWAPI Version *
+	ver 3.7.4
+	ver 4.1.2
+	ver 4.2.0
+	ver 4.4.0
+ver 4.4.0
+
+File Type *
+	DLL
+	ProxyBot
+DLL
+
+Using File I/O *
+	Use
+	Non Use
+Use
+
+Additional information
+
+Questions come from "AIIDE StarCraft AI Competition Registration Questionnaire"
+
+How did you become interested in StarCraft AI? *
+
+Pasting from old survey answers:
+
+I have always loved the game of Starcraft. I have been interested in Starcraft AIs ever since I first heard they existed via posts on the slashdot forum. The main post I recall was a link to an article about how the Berkeley Overmind bot won the 2010 Starcraft AI competition - at the time of writing (29th September 2017) you can see it as a series of articles now at: https://arstechnica.com/gaming/2011/01/skynet-meets-the-swarm-how-the-berkeley-overmind-won-the-2010-starcraft-ai-competition/
+
+Writing a Starcraft bot is a good fit for my interests in problem solving, programming, software engineering, game theory, AI/ML, strategy games (Starcraft in particular), and competition. It's a lot of fun, and often farcical.
+
+
+How long have you been working on your bot? *
+
+I haven't changed the source code for years, so I will only have a month to write a Random race bot and get it working adequately on all the CoG maps (I've never tried 6 out of 10 of them). Based on my expectations of how much time it would take to write a bot that is strong enough to compete with the other expected entrantsi on the maps, I expect it to end up with a very poor ranking, but that is ok. Better to participate, regardless.
+
+Pasting from old survey answers:
+
+I started writing ZZZBot in mid July 2015 for CIG 2015. ZZZBot (which became ZZZKBot) was my first competitive bot, but before that I had tinkered with BWAPI (see below), which helped me to learn BWAPI and the game mechanics. I usually only work on my bot just before a competition deadline...
+
+
+About How many lines of code is your bot? *
+
+TBA because I haven't started yet, but the latest version (i.e. CoG 2018 version) is 5990 lines total (for everything including comments and blank lines etc), i.e. 5888 lines in C++ files and 102 lines in the vcxproj file. There is also some basic documentation in TXT files.
+
+
+Why did you choose the race of your bot? *
+
+I've always wanted to write a Random race bot but had never got around to it. Pasting from old survey answers:
+
+When I started writing the bot I wrote a simple strategy that used very early aggression as all three races. I was surprised how effective the initial zerglings were, even against some existing strong bots. Since then, I've decided to stick with Zerg rather than switching to Protoss or Terran or Random. I'd like to write a Random race bot, but it would require much more development time and computational resources to properly test it. I thought my time would be better spent improving the Zerg logic.
+
+
+Did you use any existing projects as the basis for your bot or do you use any of them in your bot? E.g. Randomhammer, Steamhammer, CommandCenter, UAlbertaBot, TorchCraft, BWAPI/OpenBW-related libraries, FAP, JFAP, SparCraft, BWEB, BOSS, BWEM, BWTA, BWAPI4J, BWMIRROR. If you have copied other bots/projects or used IP/files/source code/logic/techniques etc from other bots/projects, you must write a list of which of them you have used/copied/wrapped/modified/etc (and which versions of them). *
+
+TBA, but the latest version didn't (CoG 2018 version). Pasting from old survey answers:
+
+So that I could get started quickly, as a basis I just started with the BWAPI version 4.1.2's ExampleAIModule project and modified it, then subsequently upgraded to use a later version of BWAPI. I still haven't got around to using a library such as BWTA2/BWEM for terrain info.
+
+
+If you made changes to any of them (rather than simply using versions of them that had already been publicly released), write a list of which you changed, and why, and a summary of what you changed. *
+
+TBA, but the latest version didn't use anything (CoG 2018 version).
+
+
+What is the overall strategy/strategies of your bot? Why did you choose them? *
+
+TBA. For the old version, see my old survey answers.
+
+Note: I originally wrote the following, but shortened it because the form said "Your response is too large. Try shortening some answers":
+TBA. Pasting from old survey answers:
+
+Same "Wu Wei" approach as previous versions, i.e. tailor some simple rushes (all 1-base build orders) and the number of defensive sunken colonies to some opponents based on their in-game player name. The only new kind of rush compared with last year's AIIDE competition is the hydra rush. The rushes are: 4-pool, speedlings, hydras, mutas (and may decide whether to muta rush based on the enemy's race if they picked Random race), or neither. Then tech to either mutas or guardians, and all rushes eventually transition to trying guardians after enough rush units have died). After it has started teching it makes zerglings. After it eventually transitions out of guardians, it starts making other tech buildings and research/upgrades and some other unit types. However, the game has usually ended by that point, and it tends to spend all its resources on mutas and zerglings rather than other unit types like utras, because of the kludgy way that unit types are prioritized. In addition, it also uses some special logic if the enemy is expected to forge fast expand ("FFE") or is expected to worker rush, although the logic for the latter does not work very well versus very many opponents.
+
+The reason for the simplistic overall strategy/approach is because, as I mention in extracts from the AIIDE2017_ENTRY.txt file included in the submission, it was only intended to be a throw-away proof of concept bot, but because it was good at winning games against other bots (and for fun), I have kept updating it for competitions. I.E. extracts: "A simple throw-away proof-of-concept cheesy kamikaze 4-pool bot implemented in a short amount of time to reach low-hanging fruit. Effective against many bots that do not have a solid opening economy/defence. Has some simple logic for scouting, targeting and resource-gathering. Apart from targeting its micro is very limited. Stays at 9 or 10 supply for several minutes of in-game time then techs straight to mutalisks or guardians (on only 1 base... soon runs out of gas...) in an attempt to finish off static defences of idle opponents, and mutalisks in an attempt to destroy lifted buildings. Uses speedling or muta rush or hydra rush build against some opponents. Uses file I/O to learn which types of rush are most effective against each opponent. Doesn't do much else." and "Originally implemented in a quick and dirty fashion so releases would be ready for the CIG & AIIDE 2015 Starcraft AI competitions.".
+
+See the answer to "Q. Why did you choose the race of your bot?" further down about how I started using the 4-pool strategy. Before I started writing the bot, my original plan was to implement a range of initial build orders/strategies and experiment to see which strategies were most effective against various opponents. After I had added some logic for overlord scouting and enemy unit targeting, the 4-pool strategy seemed so effective even on 3 or 4 player maps (especially after I added logic to scout with a drone) that it seemed my time would be better spent improving the 4-pool strategy and making it more resilient than completely changing the strategy or using disk I/O for learning which strategy to use against each enemy bot. There didn't seem to be much gain in adding much logic for transitioning out of the 4-pool strategy to other units because if 4-pool fails you are probably going to lose very quickly if the opponent is any good. I decided to continue kamikaze'ing zerglings to keep up the pressure in case it slowly wears down the opponent or in case the opponent makes a bad decision to transition out of their strategy (some bots including mine use hard-coded frame numbers as thresholds). I did, however, add logic to make it transition after a frame number threshold to mutalisks then guardians in case all that is left of the enemy is static defence or lifted buildings. There is only so much you can do to improve the 4-pool strategy though, so after CIG 2015 I tried a speedling build order which I hoped might be more effective against some opponents. In this strategy, it only starts sending zerglings out when the metabolic boost research finishes, then not long afterwards it transitions to mutalisks, then transitions to guardians if any mutalisks die. In later competitions, I added a muta rush and a hydra rush. As I said, apart from targeting its micro is very limited - I still haven't worked on it. Combat units simply keep attacking something. I didn't get around to adding any logic to make them kite or retreat or regroup or avoid dangerous threats to themself like static defences.
+
+
+Do you incorporate learning of any form in your bot? If so, how was it accomplished? *
+
+TBA. For the old version, see my old survey answers.
+
+Note: I originally wrote the following, but shortened it because the form said "Your response is too large. Try shortening some answers":
+TBA, but pasting from old survey answers:
+
+Starting in the CIG 2017 version, ZZZKBot records game info to persistent file I/O via opponent-specific append-only binary (DAT) files in the read/write folders. However, the CIG 2017 version doesn't make use of this information. Starting in the AIIDE 2017 version, at the start of each game, ZZZKBot uses the number of wins and number of losses from the DAT files in some simple hard-coded logic to learn/experiment which strategy parameters to use for the current game. The scenario criteria that are considered which vary in this competition (apart from the opponent and whether they are Protoss/Terran/Zerg/Random race) from least specific to most specific are: the number of start positions in the map, the map hash, my start location, the enemy's start location (normally not known unless it is a 2-player map or e.g. the CompleteMapInformation flag is enabled). The strategy parameters that are decided are the type of rush to use (see the last question), the special flags for whether the enemy is expected to forge fast expand or worker rush, and the number of defensive sunken colonies to build (which may vary according to race if the enemy is Random race). If it won the last game in the most specific scenario that matches the current scenario, it will always use the same strategy parameters. Alternatively (i.e. if it is known to have lost the last game in the most specific scenario that matches the current scenario), if its win rate is >= 80% or it has lost 4 or less games total (i.e. in all scenarios vs that opponent & race) it will use the same strategy parameters as the lost game, otherwise it will either pick a different combination of strategy parameters that has won at least once in a less specific scenario that matches the current scenario (if the expected win rate is good enough of a randomly selected (but weighted by win rate) combination of strategy parameters, excluding the strategy parameters combo that we just lost for) otherwise it will pick a combination of strategy parameters at random according to some probability weightings I have pre-defined. Unfortunately there are bugs in this logic (in the AIIDE 2017 version) that cause learning to be unnecessarily slow vs Random race bots (i.e. just UAlbertaBot in the AIIDE 2017 competition), and sometimes (but thankfully quite rarely) causes it to pick a combination of parameters that were not designed to be used together which cause the bot to get stuck waiting and never building a sunken colony before doing anything such as building more drones/buildings/combat units or attacking, so it becomes extremely passive and probably loses the game.
+
+
+Do you use any interesting AI techniques or algorithms in your bot? If so, which? *
+
+TBA. For the old version, see my old survey answers.
+
+Note: I originally wrote the following, but shortened it because the form said "Your response is too large. Try shortening some answers":
+TBA, but pasting from old survey answers:
+
+My original development approach was to focus on the basics and reach low-hanging fruit (i.e. a "Wu Wei" approach) before moving on to more sophisticated stuff, and as it turned out there was more than enough to work on before getting around to anything more sophisticated. The only inter-game learning is the logic to pick a combination of strategy parameters based on the outcomes (i.e. binary win vs loss) from previous games.
+
+Idle workers (and workers that have just returned minerals/gas to the base and are now/still a mineral gatherer) are allocated to unallocated mineral patches near the starting base using a greedy search algorithm which is based on the best worker's total distance between the base and an unallocated mineral patch (most important) plus distance from the worker to that mineral patch (less important). When there are no more unallocated mineral patches available, any remaining idle workers are all simply allocated to the mineral patch that is closest to the base (which will probably make workers bounce around between mineral patches somewhat, although they may settle after a few trips).
+
+Most of the decisions in the bot are achieved by simple hard-coded prioritization of the various considerations involved. For example, the decision for which enemy unit to target is simply distance-based spiral searches with a hard-coded maximum distance threshold specified (via calls to BWAPI's getBestUnit() and getClosestUnit() functions) using simple heuristics mainly based on an ordering of attributes, with units that are in mutual weapon range first, threatening enemy units next, and an ordering of the various enemy unit attributes such as isPowered(), unitType() (the ordering of the various unit types is hard-coded), an estimate of enemy unit life force (a kludge based on HP, shields, armor, defense matrix points if it is defense matrixed), then a bunch of other ordered enemy unit attributes such as whether it is constructing a building. Another example is the decision for which unit to build/train next - a simple ordering is used (i.e. a kludge mainly just the order the various unit command calls appear in the source code) with some heuristics based on what type of rush we are doing, what tech buildings we need, how many drones we have, how many drones have died, how many of the rush unit type have died. Tech transitions are mainly triggered based on how many of our units of a particular unit type have died, or in some cases a hard-coded frame count threshold.
+
+Uses randomization for strategy parameters combo selection in some cases, and also for each scouting unit's target position after all possible enemy start locations have been scouted and there are no known (landed) enemy buildings (and being more likely to select a target position that is not currently visible than a position that is already visible).
+
+For the various maps and possible start locations, I also dumped the tile positions of creep around a zerg base at the start of the game and use this data (it's now hard-coded) when scouting against a Zerg or Random race bot to help guess their start location. There may be an easy algorithm to deduce the locations of the creep, but at the time, a submission deadline was approaching and it was quicker than spending time trying to figure out Broodwar's logic.
+
+For info about the strategy learning logic used, see the last answer.
+
+
+What do you feel are the strongest and weakest parts of your bot's overall performance? *
+
+TBA. For the old version, see my old survey answers.
+
+Note: I originally wrote the following, but shortened it because the form said "Your response is too large. Try shortening some answers":
+TBA, but pasting from old survey answers:
+
+Strengths: It's a cheesy N-trick pony. All it can do is some simple 1-base rush builds, with little or no follow-up. Its only strength lies in the fact that many existing bots are vulnerable to cheesy builds like this. Now that it has a little inter-game strategy learning logic, it may be able to learn which type of rush is most effective.
+
+Weaknesses: apart from targeting, combat micro is almost non-existent - the only logic for combat micro is whether to wait at my base after morphing (only used in some types of rush while waiting for some tech to finish), or attack (almost all other scenarios), or defend my base (very rare). Also, it never expands. It would be useless against humans - it was not intended to be tested against humans - but it is effective against various other bots.
+
+
+If you competed in previous tournaments, what did you change for this year's entry? *
+
+TBA, but I plan to at least play as Random race (not just as Zerg) and support the CoG maps (I haven't tried 6 out of 10 of the maps), probably very poorly considering I only have one month to write it, and upgrade to BWAPI 4.4.0 (from 4.2.0) if it doesn't cause too much trouble.
+
+
+Have you tested your bot against humans? If so, how did it go? *
+
+I haven't tested it personally, but Sejong University tested some bots including mine against http://wiki.teamliquid.net/starcraft/Stork and some amateurs in showmatches in October 2017.  Mine lost 0:1 vs Stork, and won 1:0 vs the two amateurs. Links:
+https://www.technologyreview.com/s/609242/humans-are-still-better-than-ai-at-starcraftfor-now/
+https://cilab.sejong.ac.kr/home/doku.php?id=public:starcraft_human_vs_ai
+
+It is also currently being used on the StarCraft Human 'N' AI League (SCHNAIL) at https://schnail.com/, because it was one of the bots that were copied from SSCAIT at https://sscaitournament.com/.
+
+
+Any fun or interesting stories about the development / testing of your bot? *
+
+Pasting from old survey answers:
+
+Before I started writing a competitive bot, while I was tinkering with BWAPI for the first time, I wrote a bot just for experimentation purposes. It identifies all allowed unit commands for all my units every 3 in-game seconds and issues one out of all of those commands at random. For commands that take arguments, it picked argument value(s) from among the allowed argument values at random, e.g. it only issues a build command for buildable locations. It was able to issue every possible command in the game that was allowed at that moment, including all spells and abilities. It was useless competitively of course but it was interesting to watch it on full speed playing against itself, especially if I helped it by making a few extra workers for it at the start. It would slowly build its base up (including gathering minerals, making a refinery and gathering gas), train units, research/upgrade, and have strange skirmishes with enemy units.  When playing by itself, at some point it would inevitably wipe itself out by attacking its own buildings with workers or zerglings or marines or air units or whatever. On test maps where you start with lots of late-game units it was interesting to watch it cast all kinds of spells and abilities etc on its own units and enemy units, load and unload units, lift and move and land Terran buildings, nuke/storm itself, make hallucinations, mind control critters etc.
+
+
+Any other projects you're working on that you'd like to advertise? *
+
+No.
+
+
+Any other description about your AI bot
+
+TBA

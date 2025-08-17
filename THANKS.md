@@ -14,7 +14,7 @@ In particular, the following individuals:
 * Dave Churchill
 * Michael Buro
 * Seonghun Yoon
-* Cheong-mok Bae 
+* Cheong-mok Bae
 * Sehar Shahzad Farooq
 * In-Seok Oh
 * Kyung-Joong Kim

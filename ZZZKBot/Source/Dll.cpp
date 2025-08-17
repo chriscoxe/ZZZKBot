@@ -1,4 +1,4 @@
-// Copyright 2017 Chris Coxe.
+// Copyright 2020 Chris Coxe.
 // 
 // ZZZKBot is distributed under the terms of the GNU Lesser General
 // Public License (LGPL) version 3.
@@ -32,7 +32,7 @@
 #include "ZZZKBotAIModule.h"
 
 extern "C" __declspec(dllexport) void gameInit(BWAPI::Game* game) { BWAPI::BroodwarPtr = game; }
-BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved )
+BOOL APIENTRY DllMain( HANDLE /*hModule*/, DWORD ul_reason_for_call, LPVOID /*lpReserved*/ )
 {
   switch (ul_reason_for_call)
   {

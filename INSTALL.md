@@ -6,15 +6,15 @@ These instructions are simply the same as how you would compile BWAPI 4.2.0's Ex
 
 1. On Windows (I used Windows 7 SP1), install Microsoft Visual Studio 2017 (I used Microsoft Visual Studio Community 2017; note that this is registerware, i.e. it can be downloaded for free from Microsoft without registering, but after 30 days it will prompt you and require you to register (free of charge) to be able to continue using it).
 
-1. Install BWAPI 4.2.0 to a path that does not contain spaces. I am not sure whether the following instructions will work if you install it to a path that contains spaces - I haven't tried it.
+1. Unless you are using an old version of Microsoft Visual Studio 2017 below 15.3, you will need to use BWAPI.VS.15.7.3.7z or BWAPI_Setup.VS.15.7.3.exe from https://github.com/bwapi/bwapi/releases/tag/v4.2.0 (not BWAPI_420.old.7z or BWAPI_420_Setup.old.exe). Extract or install it to a path that does not contain spaces. I am not sure whether the following instructions will work if you install it to a path that contains spaces - I haven't tried it.
 
-1. Set the environment variable BWAPI_DIR to the path of where you installed BWAPI 4.2.0 to. Note: the project does not depend on any other libraries, does not reference any absolute file paths, and when the bot is run it does not require any absolute file paths (e.g. it doesn't matter what directory you have installed Starcraft: Broodwar to).
+1. Set the environment variable BWAPI_DIR to the path of where you put BWAPI 4.2.0. Note: the project does not depend on any other libraries, does not reference any absolute file paths, and when the bot is run it does not require any absolute file paths (e.g. it doesn't matter what directory you have installed Starcraft: Broodwar to).
 
 1. In Windows Explorer, double-click the ZZZKBot.vcxproj file.
 
 1. Change the drop-down from "Debug" to "Release".
 
-1. From the menu, select: Build -> Build Solution. It should build with no errors/warnings. On my computer it takes less than 15 seconds to build.
+1. From the menu, select: Build -> Build Solution. On my computer it takes less than 15 seconds to build. It should build with no errors/warnings. If it fails with an error such as "LINK : fatal error C1047: The object or library file 'BWAPI.lib' was created with an older compiler than other objects; rebuild old objects and libraries", check that you are using the correct version of Microsoft Visual Studio and check that you are using the correct BWAPI package and check that the BWAPI_DIR environment variable has been set correctly (see the points above).
 
 1. A folder named "Release" should be automatically created when building. The output is a single DLL file in that folder named ZZZKBot.dll.
 
@@ -35,7 +35,7 @@ Note: ZZZKBot is intended to support being run on Windows 7 SP1 (later versions 
    and ensure that the following folders exist:
 
    \<Starcraft folder\>/bwapi-data/read/
-   
+
    \<Starcraft folder\>/bwapi-data/write/
 
    and configure its path via the "ai" setting in:

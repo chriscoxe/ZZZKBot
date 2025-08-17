@@ -1,4 +1,4 @@
-// Copyright 2017 Chris Coxe.
+// Copyright 2020 Chris Coxe.
 // 
 // ZZZKBot is distributed under the terms of the GNU Lesser General
 // Public License (LGPL) version 3.
@@ -27,11 +27,8 @@
 // of BWAPI.
 
 #include "ZZZKBotAIModule.h"
-#include <iostream>
-#include <limits>
 #include <fstream>
 #include <iomanip>
-#include <cstdlib>
 
 using namespace BWAPI;
 using namespace Filter;
@@ -98,30 +95,30 @@ void ZZZKBotAIModule::onEnd(bool isWinner)
     // it's possible that onEnd() might be called multiple times for whatever reason, e.g.
     // perhaps it could happen while the game is paused/unpaused? Better safe than sorry
     // because we do not want to spam the output file while the game is paused.
-    static int frameCountLastCalled = -1;
-    if (frameCountLastCalled != -1)
+    if (onEndFrameCount >= 0)
     {
         return;
     }
-    frameCountLastCalled = Broodwar->getFrameCount();
+    onEndFrameCount = Broodwar->getFrameCount();
 
     if (enemyPlayerID >= 0)
     {
         std::ostringstream oss;
-    
+
         oss << startOfUpdateSentinel << delim;
-    
+
         // Update type.
         oss << onEndUpdateSignifier << delim;
-    
+
         oss << Broodwar->getFrameCount() << delim;
         oss << Broodwar->elapsedTime() << delim;
-    
+
         // Get time now.
         // Note: localtime_s is not portable but w/e.
         std::time_t timer = std::time(nullptr);
         oss << (timer - timerAtGameStart) << delim;
         struct tm buf;
+        memset(&buf, 0, sizeof(buf));
         errno_t errNo = localtime_s(&buf, &timer);
         if (errNo == 0)
         {
@@ -133,13 +130,13 @@ void ZZZKBotAIModule::onEnd(bool isWinner)
             oss << std::put_time(&buf, "%H:%M:%S");
         }
         oss << delim;
-    
+
         oss << isWinner << delim;
-    
+
         oss << endOfUpdateSentinel << delim;
-    
+
         oss << endOfLineSentinel;
-    
+
         // Block to restrict scope of variables.
         {
             // Append to the file for the enemy in the write folder.
@@ -225,19 +222,6 @@ void ZZZKBotAIModule::onFrame()
     const int lastPeakGroundWeaponCooldownFrameInd = 18;
     const int lastPeakAirWeaponCooldownFrameInd = 19;
 
-    static std::set<BWAPI::TilePosition> enemyStartLocs;
-    static std::set<BWAPI::TilePosition> possibleOverlordScoutLocs;
-    // TODO: this bot is currently only designed to support 1v1 games without other players unless they
-    // haven't had any buildings and don't currently have any buildings, i.e. these types of players are
-    // not currently dealt with properly:
-    // allies that are still playing,
-    // allies that have left,
-    // players that were enemies but have left (i.e. are now neutral not enemies),
-    // other neutral players that have neutral buildings.
-    static bool isARemainingEnemyZerg = false;
-    static bool isARemainingEnemyTerran = false;
-    static bool isARemainingEnemyProtoss = false;
-    static bool isARemainingEnemyRandomRace = false;
     for (const BWAPI::Player& p : Broodwar->enemies())
     {
         if (p->getRace() == BWAPI::Races::Zerg)
@@ -260,25 +244,18 @@ void ZZZKBotAIModule::onFrame()
             isARemainingEnemyRandomRace = true;
         }
 
-        const BWAPI::TilePosition enemyStartLoc = p->getStartLocation();
-        if (enemyStartLoc != BWAPI::TilePositions::Unknown && enemyStartLoc != BWAPI::TilePositions::None)
+        const BWAPI::TilePosition enemyStartLocTmp = p->getStartLocation();
+        if (enemyStartLocTmp != BWAPI::TilePositions::Unknown && enemyStartLocTmp != BWAPI::TilePositions::None)
         {
             if (enemyStartLocs.empty())
             {
                 possibleOverlordScoutLocs.clear();
             }
 
-            possibleOverlordScoutLocs.insert(enemyStartLoc);
-            enemyStartLocs.insert(enemyStartLoc);
+            possibleOverlordScoutLocs.insert(enemyStartLocTmp);
+            enemyStartLocs.insert(enemyStartLocTmp);
         }
     }
-
-    static std::set<BWAPI::TilePosition> startLocs;
-    static BWAPI::TilePosition myStartLoc = BWAPI::TilePositions::Unknown;
-    static BWAPI::Position myStartRoughPos = BWAPI::Positions::Unknown;
-    static std::set<BWAPI::TilePosition> otherStartLocs;
-    static std::set<BWAPI::TilePosition> scoutedOtherStartLocs;
-    static std::set<BWAPI::TilePosition> unscoutedOtherStartLocs;
 
     // Converts a specified BWAPI::TilePosition and building type into a BWAPI::Position that would be roughly at the
     // centre of the building if it is built at the specified BWAPI::TilePosition.
@@ -303,11 +280,11 @@ void ZZZKBotAIModule::onFrame()
         if (loc != BWAPI::TilePositions::None && loc != BWAPI::TilePositions::Unknown)
         {
             startLocs.insert(loc);
-    
+
             if (loc != myStartLoc)
             {
                 const std::pair<std::set<BWAPI::TilePosition>::iterator, bool> ret = otherStartLocs.insert(loc);
-    
+
                 if (ret.second)
                 {
                     unscoutedOtherStartLocs.insert(*ret.first);
@@ -320,14 +297,8 @@ void ZZZKBotAIModule::onFrame()
         }
     }
 
-    static bool isMapPlasma_v_1_0 = false;
-
-    // Each element of the set is a tile position where creep should be on frame zero for that start location.
-    struct InitialCreepLocsSet { std::set<BWAPI::TilePosition> val; };
-    // The key is the starting location (mine and possible enemy start locations).
-    struct InitialCreepLocsMap { std::map<const BWAPI::TilePosition, InitialCreepLocsSet> val; };
-
-    static InitialCreepLocsMap initialCreepLocsMap;
+    auto& isMapPlasma_v_1_0_Auto = isMapPlasma_v_1_0;
+    const std::string mapHashPlasma_v_1_0 = "6f5295624a7e3887470f3f2e14727b1411321a67";
 
     if (initialCreepLocsMap.val.empty())
     {
@@ -348,7 +319,7 @@ void ZZZKBotAIModule::onFrame()
 
                 return;
             };
-    
+
         // FYI: here is a handy Cygwin command to parse the creep_data.txt file(s) ready for copy-and-pasting into this source code:
         // cat creep_data*.txt | sort -u | sed 's/^\([^ ]* [^ ]* [^ ]* [^ ]* [^ ]*\) .*/\1/' | awk -F' ' '{possibleComma = ""; if ($1" "$2" "$3 in a) possibleComma = ","; a[$1" "$2" "$3] = a[$1" "$2" "$3]""possibleComma""$4","$5};END{for(i in a) { split(i,iArr," "); print iArr[1]": addToCreepLocsMap(BWAPI::TilePosition("iArr[2]", "iArr[3]"), std::vector<int> { "a[i]" } );"} }' | sort
 
@@ -418,6 +389,16 @@ void ZZZKBotAIModule::onFrame()
             addToCreepLocsMap(BWAPI::TilePosition(31, 7), std::vector<int> { 23,7,23,8,23,9,24,10,24,11,24,5,24,6,24,7,24,8,24,9,25,10,25,11,25,12,25,4,25,5,25,6,25,9,26,10,26,5,27,10,27,5,27,7,27,8,28,10,28,11,28,12,28,4,28,5,28,6,28,7,28,8,28,9,29,10,29,11,29,12,29,13,29,3,29,4,29,5,29,6,29,7,29,8,29,9,30,10,30,11,30,12,30,13,30,14,30,2,30,3,30,4,30,5,30,6,30,7,30,8,30,9,31,10,31,11,31,12,31,13,31,14,31,4,31,5,31,6,31,7,31,8,31,9,32,10,32,11,32,12,32,13,32,14,32,4,32,5,32,6,32,7,32,8,32,9,33,10,33,11,33,12,33,13,33,14,33,4,33,5,33,6,33,7,33,8,33,9,34,10,34,11,34,12,34,13,34,14,34,4,34,5,34,6,34,7,34,8,34,9,35,10,35,11,35,12,35,13,35,14,35,2,35,3,35,4,35,5,35,6,35,7,35,8,35,9,36,10,36,11,36,12,36,13,36,3,36,4,36,5,36,6,36,7,36,8,36,9,37,10,37,11,37,12,37,13,37,3,37,4,37,5,37,6,37,7,37,8,37,9,38,10,38,11,38,12,38,13,38,3,38,4,38,5,38,6,38,7,38,8,38,9,39,10,39,11,39,12,39,4,39,5,39,6,39,7,39,8,39,9,40,10,40,11,40,12,40,4,40,5,40,6,40,7,40,8,40,9,41,10,41,11,41,5,41,6,41,7,41,8,41,9,42,7,42,8,42,9 } );
             addToCreepLocsMap(BWAPI::TilePosition(64, 118), std::vector<int> { 56,118,56,119,56,120,57,116,57,117,57,118,57,119,57,120,57,121,57,122,58,115,58,116,58,117,58,118,58,119,58,120,58,121,58,122,58,123,59,115,59,116,59,117,59,118,59,119,59,120,59,121,59,122,59,123,60,114,60,115,60,116,60,117,60,118,60,119,60,120,60,121,60,122,60,123,60,124,61,114,61,115,61,116,61,117,61,118,61,119,61,120,61,121,61,122,61,123,61,124,62,114,62,115,62,116,62,117,62,118,62,119,62,120,62,121,62,122,62,123,62,124,63,113,63,114,63,115,63,116,63,117,63,118,63,119,63,120,63,121,63,122,63,123,63,124,63,125,64,115,64,116,64,117,64,118,64,119,64,120,64,121,64,122,64,123,64,124,64,125,65,115,65,116,65,117,65,118,65,119,65,120,65,121,65,122,65,123,65,124,65,125,66,115,66,116,66,117,66,118,66,119,66,120,66,121,66,122,66,123,66,124,66,125,67,115,67,116,67,117,67,118,67,119,67,120,67,121,67,122,67,123,67,124,67,125,68,113,68,114,68,115,68,116,68,117,68,118,68,119,68,120,68,121,68,122,68,123,68,124,68,125,69,114,69,115,69,116,69,117,69,118,69,119,69,120,69,121,69,122,69,123,69,124,70,114,70,115,70,116,70,117,70,118,70,119,70,120,70,121,70,122,70,123,71,114,71,116,71,118,71,119,71,121,72,116,73,115,73,116,73,117,73,120,73,122,73,123,74,116,74,117,74,118,74,119,74,120,74,121,74,122,75,118,75,119,75,120 } );
         }
+        // Roadkill map unknown map version (map name converted to plain text contains "Roadkill")
+        // This map was first used in AIIDE in the optional "unknown maps competition" in AIIDE 2019,
+        // then as part of the main map pool in AIIDE 2020
+        else if (mapHash == "5386ec02cc3ee913acc55181896c287ae9d5b5c6")
+        {
+            addToCreepLocsMap(BWAPI::TilePosition(117, 66), std::vector<int> { 109,66,109,67,109,68,110,64,110,65,110,66,110,67,110,68,110,69,110,70,111,63,111,64,111,65,111,66,111,67,111,68,111,69,111,70,111,71,112,63,112,64,112,65,112,66,112,67,112,68,112,69,112,70,112,71,113,62,113,63,113,64,113,65,113,66,113,67,113,68,113,69,113,70,113,71,113,72,114,62,114,63,114,64,114,65,114,66,114,67,114,68,114,69,114,70,114,71,114,72,115,62,115,63,115,64,115,65,115,66,115,67,115,68,115,69,115,70,115,71,115,72,116,61,116,62,116,63,116,64,116,65,116,66,116,67,116,68,116,69,116,70,116,71,116,72,116,73,117,63,117,64,117,65,117,66,117,67,117,68,117,69,117,70,117,71,117,72,117,73,118,63,118,64,118,65,118,66,118,67,118,68,118,69,118,70,118,71,118,72,118,73,119,63,119,64,119,65,119,66,119,67,119,68,119,69,119,70,119,71,119,72,119,73,120,63,120,64,120,65,120,66,120,67,120,68,120,69,120,70,120,71,120,72,120,73,121,61,121,62,121,63,121,64,121,65,121,66,121,67,121,68,121,69,121,70,121,71,121,73,122,62,122,63,122,64,122,65,122,66,122,67,122,68,122,69,122,70,122,71,123,62,123,63,123,64,123,65,123,66,123,67,123,68,123,69,123,70,123,71,124,62,124,64,124,66,124,67,124,69,124,71,125,64,125,71,126,63,126,64,126,65,126,68,126,70,126,71,127,64,127,65,127,66,127,67,127,68,127,69,127,70 } );
+            addToCreepLocsMap(BWAPI::TilePosition(57, 118), std::vector<int> { 49,118,49,119,49,120,50,116,50,117,50,120,50,121,50,122,51,115,51,116,51,117,51,120,51,121,51,122,51,123,52,115,52,116,52,117,52,120,52,121,52,123,53,114,53,115,53,116,53,117,53,120,53,121,53,123,54,114,54,115,54,116,54,117,54,118,54,119,54,120,54,121,54,122,54,123,55,114,55,115,55,116,55,117,55,118,55,119,55,120,55,121,55,122,55,123,56,113,56,114,56,115,56,116,56,117,56,118,56,119,56,120,56,121,56,122,56,123,57,113,57,114,57,115,57,116,57,117,57,118,57,119,57,120,57,121,57,122,57,123,57,124,58,113,58,114,58,115,58,116,58,117,58,118,58,119,58,120,58,121,58,122,58,123,58,125,59,113,59,114,59,115,59,116,59,117,59,118,59,119,59,120,59,121,59,122,59,123,60,113,60,114,60,115,60,116,60,117,60,118,60,119,60,120,60,121,60,122,60,123,60,124,61,113,61,114,61,115,61,116,61,117,61,118,61,119,61,120,61,121,61,122,61,123,62,114,62,115,62,116,62,117,62,118,62,119,62,120,62,121,62,122,62,123,63,114,63,115,63,116,63,117,63,118,63,119,63,120,63,121,63,122,63,123,64,114,64,115,64,116,64,117,64,118,64,119,64,120,64,121,64,122,64,123,65,115,65,116,65,117,65,118,65,119,65,120,65,121,65,122,65,123,66,115,66,116,66,117,66,118,66,119,66,120,66,121,66,122,66,123,67,116,67,117,67,118,67,119,67,120,67,121,67,122,68,118,68,119,68,120 } );
+            addToCreepLocsMap(BWAPI::TilePosition(69, 6), std::vector<int> { 61,6,61,7,61,8,62,10,62,4,62,5,62,8,62,9,63,10,63,11,63,3,63,4,63,5,63,8,63,9,64,10,64,11,64,3,64,4,64,5,64,8,64,9,65,10,65,11,65,12,65,2,65,3,65,4,65,5,65,8,65,9,66,10,66,11,66,12,66,3,66,4,66,5,66,6,66,7,66,8,66,9,67,10,67,11,67,12,67,3,67,4,67,5,67,6,67,7,67,8,67,9,68,10,68,11,68,12,68,13,68,3,68,4,68,5,68,6,68,7,68,8,68,9,69,10,69,11,69,12,69,13,69,3,69,4,69,5,69,6,69,7,69,8,70,10,70,11,70,12,70,13,70,2,70,3,70,4,70,5,70,6,70,7,70,8,71,1,71,10,71,11,71,12,71,13,71,2,71,3,71,4,71,5,71,6,71,7,71,8,72,10,72,11,72,12,72,13,72,2,72,3,72,4,72,5,72,6,72,7,72,8,73,10,73,11,73,12,73,13,73,3,73,4,73,5,73,6,73,7,73,8,73,9,74,10,74,11,74,12,74,3,74,4,74,5,74,6,74,7,74,8,74,9,75,10,75,11,75,12,75,3,75,4,75,5,75,6,75,7,75,8,75,9,76,10,76,11,76,12,76,4,76,5,76,7,76,8,76,9,77,10,77,11,77,4,77,7,77,8,77,9,78,10,78,11,78,3,78,4,78,6,78,7,78,8,78,9,79,10,79,4,79,5,79,6,79,7,79,8,79,9,80,6,80,7,80,8 } );
+            addToCreepLocsMap(BWAPI::TilePosition(7, 58), std::vector<int> { 0,56,0,57,0,58,0,59,0,60,0,61,0,62,1,55,1,56,1,58,1,60,1,62,1,63,10,55,10,56,10,57,10,58,10,59,10,60,10,61,10,62,10,63,10,64,10,65,11,53,11,54,11,55,11,56,11,57,11,58,11,59,11,60,11,61,11,62,11,63,11,64,11,65,12,54,12,55,12,56,12,57,12,58,12,59,12,60,12,61,12,62,12,63,12,64,13,54,13,55,13,56,13,57,13,58,13,59,13,60,13,61,13,62,13,63,13,64,14,54,14,55,14,56,14,57,14,58,14,59,14,60,14,61,14,62,14,63,14,64,15,55,15,56,15,57,15,58,15,59,15,60,15,61,15,62,15,63,16,55,16,56,16,57,16,58,16,59,16,60,16,61,16,62,16,63,17,56,17,57,17,58,17,59,17,60,17,61,17,62,18,58,18,59,18,60,2,56,3,56,3,57,3,59,3,61,3,64,4,55,4,56,4,57,4,58,4,59,4,60,4,61,4,62,4,63,4,64,5,54,5,55,5,56,5,57,5,58,5,59,5,60,5,61,5,62,5,63,5,64,6,53,6,54,6,55,6,56,6,57,6,58,6,59,6,60,6,61,6,62,6,63,6,64,6,65,7,55,7,56,7,57,7,58,7,59,7,60,7,61,7,62,7,63,7,64,7,65,8,55,8,56,8,57,8,58,8,59,8,60,8,61,8,62,8,63,8,64,8,65,9,55,9,56,9,57,9,58,9,59,9,60,9,61,9,62,9,63,9,64,9,65 } );
+        }
         // Fighting Spirit map version 1.3 (map name is not in English but says "1.3" at the end)
         // This variant is used in CIG. Note that this is different to the iCCup variant
         else if (mapHash == "5731c103687826de48ba3cc7d6e37e2537b0e902")
@@ -427,6 +408,14 @@ void ZZZKBotAIModule::onFrame()
             addToCreepLocsMap(BWAPI::TilePosition(7, 116), std::vector<int> { 0,114,0,115,0,116,0,117,0,118,0,119,0,120,1,113,1,114,1,116,1,118,1,120,1,121,10,113,10,114,10,115,10,116,10,117,10,118,10,119,10,120,10,121,10,122,10,123,11,111,11,112,11,113,11,114,11,115,11,116,11,117,11,118,11,119,11,120,11,121,11,122,11,123,12,112,12,113,12,114,12,115,12,116,12,117,12,118,12,119,12,120,12,121,12,122,13,112,13,113,13,114,13,115,13,116,13,117,13,118,13,119,13,120,13,121,13,122,14,112,14,113,14,114,14,115,14,116,14,117,14,118,14,119,14,120,14,121,14,122,15,113,15,114,15,115,15,116,15,117,15,118,15,119,15,120,15,121,16,113,16,114,16,115,16,116,16,117,16,118,16,119,16,120,16,121,17,114,17,115,17,116,17,117,17,118,17,119,17,120,18,116,18,117,18,118,2,113,3,112,3,113,3,115,3,117,3,119,4,112,4,113,4,114,4,115,4,116,4,117,4,118,4,119,4,120,4,121,5,112,5,113,5,114,5,115,5,116,5,117,5,118,5,119,5,120,5,121,5,122,6,111,6,112,6,113,6,114,6,115,6,116,6,117,6,118,6,119,6,120,6,121,6,122,6,123,7,113,7,114,7,115,7,116,7,117,7,118,7,119,7,120,7,121,7,122,7,123,8,113,8,114,8,115,8,116,8,117,8,118,8,119,8,120,8,121,8,122,8,123,9,113,9,114,9,115,9,116,9,117,9,118,9,119,9,120,9,121,9,122,9,123 } );
             addToCreepLocsMap(BWAPI::TilePosition(7, 6), std::vector<int> { 0,10,0,4,0,5,0,6,0,7,0,8,0,9,1,10,1,11,1,3,1,4,1,6,1,8,10,10,10,11,10,12,10,13,10,3,10,4,10,5,10,6,10,7,10,8,10,9,11,1,11,10,11,11,11,12,11,13,11,2,11,3,11,4,11,5,11,6,11,7,11,8,11,9,12,10,12,11,12,12,12,2,12,3,12,4,12,5,12,6,12,7,12,8,12,9,13,10,13,11,13,12,13,2,13,3,13,4,13,5,13,6,13,7,13,8,13,9,14,10,14,11,14,12,14,2,14,3,14,4,14,5,14,6,14,7,14,8,14,9,15,10,15,11,15,3,15,4,15,5,15,6,15,7,15,8,15,9,16,10,16,11,16,3,16,4,16,5,16,6,16,7,16,8,16,9,17,10,17,4,17,5,17,6,17,7,17,8,17,9,18,6,18,7,18,8,2,3,3,2,3,3,3,5,3,7,3,9,4,10,4,11,4,2,4,3,4,4,4,5,4,6,4,7,4,8,4,9,5,10,5,11,5,12,5,2,5,3,5,4,5,5,5,6,5,7,5,8,5,9,6,1,6,10,6,11,6,12,6,13,6,2,6,3,6,4,6,5,6,6,6,7,6,8,6,9,7,10,7,11,7,12,7,13,7,3,7,4,7,5,7,6,7,7,7,8,7,9,8,10,8,11,8,12,8,13,8,3,8,4,8,5,8,6,8,7,8,8,8,9,9,10,9,11,9,12,9,13,9,3,9,4,9,5,9,6,9,7,9,8,9,9 } );
         }
+        // Polaris Rhapsody map version 1.0 (map name converted to plain text contains "PolarisRhapsody 1.0")
+        // This map was first used in AIIDE in the optional "unknown maps competition" in AIIDE 2019,
+        // then as part of the main map pool in AIIDE 2020
+        else if (mapHash == "614d0048c6cc9dcf08da1409462f22f2ac4f5a0b")
+        {
+            addToCreepLocsMap(BWAPI::TilePosition(101, 118), std::vector<int> { 100,113,100,114,100,115,100,116,100,117,100,118,100,119,100,120,100,121,100,122,100,123,100,124,100,125,101,115,101,116,101,117,101,118,101,119,101,120,101,121,101,122,101,123,101,124,101,125,102,115,102,116,102,117,102,118,102,119,102,120,102,121,102,122,102,123,102,124,102,125,103,115,103,116,103,117,103,118,103,119,103,120,103,121,103,122,103,123,103,124,103,125,104,115,104,116,104,117,104,118,104,119,104,120,104,121,104,122,104,123,104,124,104,125,105,113,105,114,105,115,105,116,105,117,105,118,105,119,105,120,105,121,105,122,105,123,105,124,105,125,106,114,106,115,106,116,106,117,106,118,106,119,106,120,106,121,106,122,106,123,106,124,107,114,107,115,107,116,107,117,107,118,107,119,107,120,107,121,107,122,107,123,108,114,108,116,108,118,108,120,108,121,109,121,110,115,110,117,110,119,110,121,110,122,110,123,111,116,111,117,111,118,111,119,111,120,111,121,111,122,93,118,93,119,93,120,94,116,94,117,94,118,94,119,94,120,94,121,94,122,95,115,95,116,95,117,95,118,95,119,95,120,95,121,95,122,95,123,96,115,96,116,96,117,96,118,96,119,96,120,96,121,96,122,96,123,97,114,97,115,97,116,97,117,97,118,97,119,97,120,97,121,97,122,97,123,97,124,98,114,98,115,98,116,98,117,98,118,98,119,98,120,98,121,98,122,98,123,98,124,99,114,99,115,99,116,99,117,99,118,99,119,99,120,99,121,99,122,99,123,99,124 } );
+            addToCreepLocsMap(BWAPI::TilePosition(7, 7), std::vector<int> { 0,10,0,11,0,5,0,6,0,7,0,8,0,9,1,10,1,11,1,12,1,4,1,6,1,8,10,10,10,11,10,12,10,13,10,14,10,4,10,5,10,6,10,7,10,8,10,9,11,10,11,11,11,12,11,13,11,14,11,2,11,3,11,4,11,5,11,6,11,7,11,8,11,9,12,10,12,11,12,12,12,13,12,3,12,4,12,5,12,6,12,7,12,8,12,9,13,10,13,11,13,12,13,13,13,3,13,4,13,5,13,6,13,7,13,8,13,9,14,10,14,11,14,12,14,13,14,3,14,4,14,5,14,6,14,7,14,8,14,9,15,10,15,11,15,12,15,4,15,5,15,6,15,7,15,8,15,9,16,10,16,11,16,12,16,4,16,5,16,6,16,7,16,8,16,9,17,10,17,11,17,5,17,6,17,7,17,8,17,9,18,7,18,8,18,9,2,10,3,10,3,3,3,5,3,7,3,9,4,10,4,11,4,12,4,3,4,4,4,5,4,6,4,7,4,8,4,9,5,10,5,11,5,12,5,13,5,3,5,4,5,5,5,6,5,7,5,8,5,9,6,10,6,11,6,12,6,13,6,14,6,2,6,3,6,4,6,5,6,6,6,7,6,8,6,9,7,10,7,11,7,12,7,13,7,14,7,4,7,5,7,6,7,7,7,8,7,9,8,10,8,11,8,12,8,13,8,14,8,4,8,5,8,6,8,7,8,8,8,9,9,10,9,11,9,12,9,13,9,14,9,4,9,5,9,6,9,7,9,8,9,9 } );
+        }
         // Hitchhiker map version 1.1 (map name converted to plain text contains "Hitchhiker1.1")
         else if (mapHash == "69a3b6a5a3d4120e47408defd3ca44c954997948")
         {
@@ -434,10 +423,10 @@ void ZZZKBotAIModule::onFrame()
             addToCreepLocsMap(BWAPI::TilePosition(7, 6), std::vector<int> { 0,10,0,4,0,5,0,6,0,7,0,8,0,9,1,10,1,11,1,3,1,4,1,6,1,7,1,8,10,10,10,11,10,12,10,13,10,3,10,4,10,5,10,6,10,7,10,8,10,9,11,1,11,10,11,11,11,12,11,13,11,2,11,3,11,4,11,5,11,6,11,7,11,8,11,9,12,10,12,11,12,12,12,2,12,3,12,4,12,5,12,6,12,7,12,8,12,9,13,10,13,11,13,12,13,2,13,3,13,4,13,5,13,6,13,7,13,8,13,9,14,10,14,11,14,12,14,2,14,3,14,4,14,5,14,6,14,7,14,8,14,9,15,10,15,11,15,3,15,4,15,5,15,6,15,7,15,8,15,9,16,10,16,11,16,3,16,4,16,5,16,6,16,7,16,8,16,9,17,10,17,4,17,5,17,6,17,7,17,8,17,9,18,6,18,7,18,8,2,7,3,2,3,5,3,7,3,9,4,10,4,11,4,2,4,3,4,4,4,5,4,6,4,7,4,8,4,9,5,10,5,11,5,12,5,2,5,3,5,4,5,5,5,6,5,7,5,8,5,9,6,1,6,10,6,11,6,12,6,13,6,2,6,3,6,4,6,5,6,6,6,7,6,8,6,9,7,10,7,11,7,12,7,13,7,3,7,4,7,5,7,6,7,7,7,8,7,9,8,10,8,11,8,12,8,13,8,3,8,4,8,5,8,6,8,7,8,8,8,9,9,10,9,11,9,12,9,13,9,3,9,4,9,5,9,6,9,7,9,8,9,9 } );
         }
         // Plasma map version 1.0 (map name converted to plain text contains "Plasma 1.0")
-        else if (mapHash == "6f5295624a7e3887470f3f2e14727b1411321a67")
+        else if (mapHash == mapHashPlasma_v_1_0)
         {
             isMapPlasma_v_1_0 = true;
-            
+
             addToCreepLocsMap(BWAPI::TilePosition(14, 110), std::vector<int> { 10,106,10,107,10,108,10,109,10,111,10,112,10,114,11,106,11,107,11,108,11,109,11,110,11,111,11,112,11,113,11,114,11,115,12,106,12,107,12,108,12,109,12,110,12,111,12,112,12,113,12,114,12,115,13,105,13,106,13,107,13,108,13,109,13,110,13,111,13,112,13,113,13,114,13,115,14,107,14,108,14,109,14,110,14,111,14,112,14,113,14,114,14,115,14,116,15,107,15,108,15,109,15,110,15,111,15,112,15,113,15,114,15,115,15,117,16,107,16,108,16,109,16,110,16,111,16,112,16,113,16,114,16,115,16,117,17,107,17,108,17,109,17,110,17,111,17,112,17,113,17,114,17,115,17,116,17,117,18,105,18,106,18,107,18,108,18,109,18,110,18,111,18,112,18,113,18,114,18,115,18,116,18,117,19,106,19,107,19,108,19,109,19,110,19,111,19,112,19,113,19,114,19,115,19,116,20,106,20,107,20,108,20,109,20,110,20,111,20,112,20,113,20,114,20,115,20,116,21,106,21,107,21,108,21,109,21,110,21,111,21,112,21,113,21,114,21,115,21,116,22,107,22,108,22,109,22,110,22,111,22,112,22,113,22,114,22,115,23,107,23,108,23,109,23,110,23,111,23,112,23,113,23,114,23,115,24,108,24,109,24,110,24,111,24,112,24,113,24,114,25,110,25,111,25,112,6,110,6,111,6,112,7,108,7,109,7,110,7,111,7,112,7,113,7,114,8,107,8,108,8,109,8,110,8,113,8,114,8,115,9,107,9,108,9,109,9,114 } );
             addToCreepLocsMap(BWAPI::TilePosition(14, 14), std::vector<int> { 10,11,10,13,10,15,10,17,10,18,11,11,11,12,11,13,11,14,11,15,11,16,11,17,11,18,11,19,12,10,12,11,12,12,12,13,12,14,12,15,12,16,12,17,12,18,12,19,12,20,13,10,13,11,13,12,13,13,13,14,13,15,13,16,13,17,13,18,13,19,13,20,13,21,13,9,14,11,14,12,14,13,14,14,14,15,14,16,14,17,14,18,14,19,14,20,14,21,15,11,15,12,15,13,15,14,15,15,15,16,15,17,15,18,15,19,15,20,15,21,16,11,16,12,16,13,16,14,16,15,16,16,16,17,16,18,16,19,16,20,16,21,17,11,17,12,17,13,17,14,17,15,17,16,17,17,17,18,17,19,17,20,17,21,18,10,18,11,18,12,18,13,18,14,18,15,18,16,18,17,18,18,18,19,18,20,18,21,18,9,19,10,19,11,19,12,19,13,19,14,19,15,19,16,19,17,19,18,19,19,19,20,20,10,20,11,20,12,20,13,20,14,20,15,20,16,20,17,20,18,20,19,20,20,21,10,21,11,21,12,21,13,21,14,21,15,21,16,21,17,21,18,21,19,21,20,22,11,22,12,22,13,22,14,22,15,22,16,22,17,22,18,22,19,23,11,23,12,23,13,23,14,23,15,23,16,23,17,23,18,23,19,24,12,24,13,24,14,24,15,24,16,24,17,24,18,25,14,25,15,25,16,6,14,6,15,6,16,7,12,7,13,7,14,7,15,7,16,7,17,7,18,8,11,8,12,8,14,8,16,8,17,8,19,9,11,9,17 } );
             addToCreepLocsMap(BWAPI::TilePosition(77, 63), std::vector<int> { 70,61,70,62,70,63,70,64,70,65,70,66,70,67,71,60,71,61,71,62,71,63,71,64,71,65,71,66,71,67,71,68,72,60,72,61,72,62,72,63,72,64,72,65,72,66,72,67,72,68,73,59,73,60,73,61,73,62,73,63,73,64,73,65,73,66,73,67,73,68,73,69,74,59,74,60,74,61,74,62,74,63,74,64,74,65,74,66,74,67,74,68,74,69,75,59,75,60,75,61,75,62,75,63,75,64,75,65,75,66,75,67,75,68,75,69,76,58,76,59,76,60,76,61,76,62,76,63,76,64,76,65,76,66,76,67,76,68,76,69,76,70,77,60,77,61,77,62,77,63,77,64,77,65,77,66,77,67,77,68,77,69,77,70,78,60,78,61,78,62,78,63,78,64,78,65,78,66,78,67,78,68,78,69,78,70,79,60,79,61,79,62,79,63,79,64,79,65,79,66,79,67,79,68,79,69,79,70,80,60,80,61,80,62,80,63,80,64,80,65,80,66,80,67,80,68,80,69,80,70,81,58,81,59,81,60,81,61,81,62,81,63,81,64,81,65,81,66,81,67,81,68,81,69,81,70,82,59,82,60,82,61,82,62,82,63,82,64,82,65,82,66,82,67,82,68,82,69,83,59,83,60,83,61,83,62,83,63,83,64,83,65,83,66,83,67,83,68,84,59,84,61,84,63,84,65,84,66,85,66,86,60,86,62,86,64,86,66,86,67,86,68,87,61,87,62,87,63,87,64,87,65,87,66,87,67,88,63,88,64,88,65 } );
@@ -550,6 +539,15 @@ void ZZZKBotAIModule::onFrame()
             addToCreepLocsMap(BWAPI::TilePosition(117, 83), std::vector<int> { 109,83,109,84,109,85,110,81,110,82,110,83,110,84,110,85,110,86,110,87,111,80,111,81,111,82,111,83,111,84,111,85,111,86,111,87,111,88,112,80,112,81,112,82,112,83,112,84,112,85,112,86,112,87,112,88,113,79,113,80,113,81,113,82,113,83,113,84,113,85,113,86,113,87,113,88,113,89,114,79,114,80,114,81,114,82,114,83,114,84,114,85,114,86,114,87,114,88,114,89,115,79,115,80,115,81,115,82,115,83,115,84,115,85,115,86,115,87,115,88,115,89,116,78,116,79,116,80,116,81,116,82,116,83,116,84,116,85,116,86,116,87,116,88,116,89,116,90,117,78,117,79,117,80,117,81,117,82,117,83,117,84,117,85,117,86,117,87,117,88,118,78,118,79,118,80,118,81,118,82,118,83,118,84,118,85,118,86,118,87,118,88,119,78,119,79,119,80,119,81,119,82,119,83,119,84,119,85,119,86,119,87,119,88,120,78,120,79,120,80,120,81,120,82,120,83,120,84,120,85,120,86,120,87,120,88,121,78,121,79,121,80,121,81,121,82,121,83,121,84,121,85,121,86,121,87,121,88,121,89,121,90,122,79,122,80,122,81,122,82,122,83,122,84,122,85,122,86,122,87,122,88,122,89,123,79,123,80,123,81,123,82,123,83,123,84,123,85,123,86,123,87,123,88,123,89,124,79,124,82,124,83,124,84,124,85,124,87,124,89,125,84,126,80,126,81,126,84,126,86,126,88,127,81,127,82,127,83,127,84,127,85,127,86,127,87 } );
             addToCreepLocsMap(BWAPI::TilePosition(7, 83), std::vector<int> { 0,81,0,82,0,83,0,84,0,85,0,86,0,87,1,80,1,81,1,83,1,85,1,88,10,78,10,79,10,80,10,81,10,82,10,83,10,84,10,85,10,86,10,87,10,88,11,78,11,79,11,80,11,81,11,82,11,83,11,84,11,85,11,86,11,87,11,88,11,89,11,90,12,79,12,80,12,81,12,82,12,83,12,84,12,85,12,86,12,87,12,88,12,89,13,79,13,80,13,81,13,82,13,83,13,84,13,85,13,86,13,87,13,88,13,89,14,79,14,80,14,81,14,82,14,83,14,84,14,85,14,86,14,87,14,88,14,89,15,80,15,81,15,82,15,83,15,84,15,85,15,86,15,87,15,88,16,80,16,81,16,82,16,83,16,84,16,85,16,86,16,87,16,88,17,81,17,82,17,83,17,84,17,85,17,86,17,87,18,83,18,84,18,85,2,83,3,79,3,82,3,83,3,84,3,86,3,87,3,89,4,79,4,80,4,81,4,82,4,83,4,84,4,85,4,86,4,87,4,88,4,89,5,79,5,80,5,81,5,82,5,83,5,84,5,85,5,86,5,87,5,88,5,89,6,78,6,79,6,80,6,81,6,82,6,83,6,84,6,85,6,86,6,87,6,88,6,89,6,90,7,78,7,79,7,80,7,81,7,82,7,83,7,84,7,85,7,86,7,87,7,88,8,78,8,79,8,80,8,81,8,82,8,83,8,84,8,85,8,86,8,87,8,88,9,78,9,79,9,80,9,81,9,82,9,83,9,84,9,85,9,86,9,87,9,88 } );
         }
+        // Longinus 2 map unknown exact map version (map name converted to plain text contains "Longinus")
+        // This map was first used in AIIDE in the optional "unknown maps competition" in AIIDE 2019,
+        // then as part of the main map pool in AIIDE 2020
+        else if (mapHash == "d16719e736252d77fdbb0d8405f7879f564bfe56")
+        {
+            addToCreepLocsMap(BWAPI::TilePosition(116, 47), std::vector<int> { 108,47,108,48,108,49,109,45,109,46,109,47,109,48,109,49,109,50,109,51,110,44,110,45,110,46,110,47,110,48,110,49,110,50,110,51,110,52,111,44,111,45,111,46,111,47,111,48,111,49,111,50,111,51,111,52,112,43,112,44,112,45,112,46,112,47,112,48,112,49,112,50,112,51,112,52,112,53,113,43,113,44,113,45,113,46,113,47,113,48,113,49,113,50,113,51,113,52,113,53,114,43,114,44,114,45,114,46,114,47,114,48,114,49,114,50,114,51,114,52,114,53,115,42,115,43,115,44,115,45,115,46,115,47,115,48,115,49,115,50,115,51,115,52,115,53,115,54,116,44,116,45,116,46,116,47,116,48,116,49,116,50,116,51,116,52,116,53,116,54,117,44,117,45,117,46,117,47,117,48,117,49,117,50,117,51,117,52,117,53,117,54,118,44,118,45,118,46,118,47,118,48,118,49,118,50,118,51,118,52,118,53,118,54,119,44,119,45,119,46,119,47,119,48,119,49,119,50,119,51,119,52,119,53,119,54,120,42,120,43,120,44,120,45,120,46,120,47,120,48,120,49,120,50,120,51,120,52,120,54,121,43,121,44,121,45,121,46,121,47,121,48,121,49,121,50,121,51,121,52,122,43,122,44,122,45,122,46,122,47,122,48,122,49,122,50,122,51,122,52,123,43,123,44,123,46,123,48,123,51,124,44,125,44,125,45,125,47,125,49,125,50,125,52,126,45,126,46,126,47,126,48,126,49,126,50,126,51,127,47,127,48,127,49 } );
+            addToCreepLocsMap(BWAPI::TilePosition(30, 117), std::vector<int> { 22,117,22,118,22,119,23,115,23,116,23,117,23,120,23,121,24,114,24,115,24,116,24,117,24,120,24,121,24,122,25,114,25,115,25,116,25,117,25,120,26,113,26,114,26,115,26,116,26,117,26,120,27,113,27,114,27,115,27,116,27,117,27,118,27,119,27,120,27,121,27,122,28,113,28,114,28,115,28,116,28,117,28,118,28,119,28,120,28,121,28,122,28,123,29,112,29,113,29,114,29,115,29,116,29,117,29,118,29,119,29,120,29,121,29,122,29,124,30,112,30,113,30,114,30,115,30,116,30,117,30,118,30,119,30,120,30,121,30,122,30,124,31,112,31,113,31,114,31,115,31,116,31,117,31,118,31,119,31,120,31,121,31,122,31,124,32,112,32,113,32,114,32,115,32,116,32,117,32,118,32,119,32,120,32,121,32,122,32,124,33,112,33,113,33,114,33,115,33,116,33,117,33,118,33,119,33,120,33,121,33,122,33,123,33,124,34,112,34,113,34,114,34,115,34,116,34,117,34,118,34,119,34,120,34,121,34,122,34,124,35,113,35,114,35,115,35,116,35,117,35,118,35,119,35,120,35,121,35,122,36,113,36,114,36,115,36,116,36,117,36,118,36,119,36,120,36,121,36,122,37,113,37,114,37,115,37,116,37,117,37,118,37,119,37,120,38,114,38,115,38,116,38,117,38,118,38,119,38,120,39,114,39,115,39,116,39,117,39,118,39,119,39,120,39,121,39,122,40,115,40,116,40,117,40,118,40,119,40,120,40,121,41,117,41,118,41,119 } );
+            addToCreepLocsMap(BWAPI::TilePosition(8, 11), std::vector<int> { 10,10,10,11,10,12,10,13,10,14,10,15,10,16,10,17,10,18,10,8,10,9,11,10,11,11,11,12,11,13,11,14,11,15,11,16,11,17,11,18,11,8,11,9,12,10,12,11,12,12,12,13,12,14,12,15,12,16,12,17,12,18,12,6,12,7,12,8,12,9,13,10,13,11,13,12,13,13,13,14,13,15,13,16,13,17,13,7,13,8,13,9,14,10,14,11,14,12,14,13,14,14,14,15,14,16,14,17,14,7,14,8,14,9,15,10,15,11,15,12,15,13,15,14,15,15,15,16,15,17,15,7,15,8,15,9,16,10,16,11,16,12,16,13,16,14,16,15,16,16,16,8,16,9,17,10,17,11,17,12,17,13,17,14,17,15,17,16,17,8,17,9,18,10,18,11,18,12,18,13,18,14,18,15,18,9,19,11,19,12,19,13,4,10,4,13,4,14,4,7,5,10,5,11,5,12,5,13,5,14,5,15,5,16,5,7,5,8,5,9,6,10,6,11,6,12,6,13,6,14,6,15,6,16,6,17,6,7,6,8,6,9,7,10,7,11,7,12,7,13,7,14,7,15,7,16,7,17,7,18,7,6,7,7,7,8,7,9,8,10,8,11,8,12,8,13,8,14,8,15,8,16,8,17,8,18,8,8,8,9,9,10,9,11,9,12,9,13,9,14,9,15,9,16,9,17,9,18,9,8,9,9 } );
+        }
         // Fighting Spirit iCCup map version 1.3 (map name converted to plain text contains "| iCCup | Fighting Spirit 1.3")
         // This variant is used in SSCAIT. Note that this is different to the non-iCCup variant
         else if (mapHash == "d2f5633cc4bb0fca13cd1250729d5530c82c7451")
@@ -607,7 +605,8 @@ void ZZZKBotAIModule::onFrame()
     // deadline was approaching and it was quicker than spending time trying to figure out
     // Broodwar's logic. Here's some old commented-out code I used to read and dump the data.
 
-    static bool isCreepDataUpdateAttempted = false;
+    // TODO: turn isCreepDataUpdateAttempted into a member variable (not a static).
+    //static bool isCreepDataUpdateAttempted = false;
     if (!isCreepDataUpdateAttempted && myStartLoc != BWAPI::TilePositions::Unknown)
     {
         const std::string mapHash = Broodwar->mapHash();
@@ -622,7 +621,7 @@ void ZZZKBotAIModule::onFrame()
             if (ifs)
             {
                 std::string line;
-    
+
                 std::string tmpMapHash;
                 int tmpMyStartLocX;
                 int tmpMyStartLocY;
@@ -635,15 +634,15 @@ void ZZZKBotAIModule::onFrame()
                 int tmpIsDefinitelyNoZergEnemy;
                 int tmpIsMaybeZergEnemy;
                 int tmpEOLSentinel;
-    
+
                 while(getline(ifs, line) && ifs)
                 {
                     tmpMapHash = "";
-    
+
                     std::istringstream iss(line);
-    
+
                     iss >> tmpMapHash;
-    
+
                     if (ifs && tmpMapHash == mapHash)
                     {
                         tmpMyStartLocX = -1;
@@ -657,7 +656,7 @@ void ZZZKBotAIModule::onFrame()
                         tmpIsDefinitelyNoZergEnemy = -1;
                         tmpIsMaybeZergEnemy = -1;
                         tmpEOLSentinel = -1;
-    
+
                         iss >> tmpMyStartLocX;
                         iss >> tmpMyStartLocY;
                         iss >> tmpLocX;
@@ -670,7 +669,7 @@ void ZZZKBotAIModule::onFrame()
                         iss >> tmpIsMaybeZergEnemy;
                         // End-on-line sentinel should always be 1 (so we can check for incomplete lines/fields).
                         iss >> tmpEOLSentinel;
-    
+
                         if (iss && tmpEOLSentinel == 1)
                         {
                             if (tmpFrameNumSeen == 0 && tmpIsCompleteMapInfo == 0 && tmpIsCreep == 1)
@@ -811,7 +810,6 @@ void ZZZKBotAIModule::onFrame()
         }
     }*/
 
-    static BWAPI::TilePosition probableEnemyStartLoc = BWAPI::TilePositions::Unknown;
     BWAPI::TilePosition probableEnemyStartLocBasedOnCreep = BWAPI::TilePositions::Unknown;
 
     if (probableEnemyStartLoc != BWAPI::TilePositions::Unknown &&
@@ -888,7 +886,7 @@ void ZZZKBotAIModule::onFrame()
                                 isARemainingEnemyZerg = true;
                                 isARemainingEnemyRandomRace = false;
                             }
-                            
+
                             probableEnemyStartLocBasedOnCreep = otherStartLoc;
                             probableEnemyStartLoc = probableEnemyStartLocBasedOnCreep;
                             break;
@@ -915,12 +913,6 @@ void ZZZKBotAIModule::onFrame()
         unscoutedOtherStartLocs.erase(otherStartLoc);
     }
 
-    static BWAPI::Unit mainBase = nullptr;
-    static std::map<const BWAPI::Unit, BWAPI::Unit> gathererToResourceMap;
-    auto gathererToResourceMapAuto = gathererToResourceMap;
-    static std::map<const BWAPI::Unit, BWAPI::Unit> resourceToGathererMap;
-    auto resourceToGathererMapAuto = resourceToGathererMap;
-
     if (mainBase == nullptr || !mainBase->exists())
     {
         mainBase =
@@ -931,12 +923,11 @@ void ZZZKBotAIModule::onFrame()
                 BWAPI::Filter::IsResourceDepot && BWAPI::Filter::IsOwned && BWAPI::Filter::IsCompleted && !BWAPI::Filter::IsLifted && BWAPI::Filter::Exists);
     }
 
-    auto mainBaseAuto = mainBase;
+    std::random_device randDev;
+    std::mt19937_64 genRand(randDev());
 
-    static BWAPI::Race enemyRaceInit;
-    static BWAPI::Race enemyRaceScouted;
+    auto& enemyRaceInitAuto = enemyRaceInit;
 
-    static bool checkedEnemyDetails = false;
     if (!checkedEnemyDetails)
     {
         checkedEnemyDetails = true;
@@ -946,8 +937,8 @@ void ZZZKBotAIModule::onFrame()
         const std::string writeDirPath = "bwapi-data/write/";
 
         const int myVersionMajor = 1;
-        const int myVersionMinor = 7;
-        const int myVersionUpdate = 0;
+        const int myVersionMinor = 9;
+        const int myVersionUpdate = 1;
         const int myVersionPatch = 0;
         // Not used currently (always 0).
         const int myVersionBuildNum = 0;
@@ -959,13 +950,25 @@ void ZZZKBotAIModule::onFrame()
             std::to_string(myVersionPatch) + versionFieldDelimiter +
             std::to_string(myVersionBuildNum);
 
+        const int dataVersionMajor = 1;
+        const int dataVersionMinor = 7;
+        const int dataVersionUpdate = 0;
+        const int dataVersionPatch = 0;
+        const int dataVersionBuildNum = 0;
+        const std::string dataVersionStr =
+            std::to_string(dataVersionMajor) + versionFieldDelimiter +
+            std::to_string(dataVersionMinor) + versionFieldDelimiter +
+            std::to_string(dataVersionUpdate) + versionFieldDelimiter +
+            std::to_string(dataVersionPatch) + versionFieldDelimiter +
+            std::to_string(dataVersionBuildNum);
+
         const std::string myBotNameHardCoded = "ZZZKBot";
         const std::string pathFieldDelimiter = "_";
         const std::string versionNumPrefix = "v";
         const std::string versusSignifierStr = "vs";
         const std::string filePrefix =
             myBotNameHardCoded + pathFieldDelimiter +
-            versionNumPrefix + pathFieldDelimiter + myVersionStr + pathFieldDelimiter +
+            versionNumPrefix + pathFieldDelimiter + dataVersionStr + pathFieldDelimiter +
             Broodwar->self()->getRace().getName() + pathFieldDelimiter +
             versusSignifierStr;
 
@@ -979,6 +982,7 @@ void ZZZKBotAIModule::onFrame()
         bool isFileCopyNeeded = false;
         bool isFileCopyFailed = false;
 
+        bool isUpdatingSSAllowed = true;
         ss.is4PoolBO = true;
         ss.isSpeedlingBO = false;
         ss.isHydraRushBO = false;
@@ -994,14 +998,6 @@ void ZZZKBotAIModule::onFrame()
         ss.numSunkensVsProtoss = ss.numSunkens;
         ss.numSunkensVsTerran = ss.numSunkens;
         ss.numSunkensVsZerg = ss.numSunkens;
-
-        static BWAPI::PlayerType enemyPlayerType;
-        static BWAPI::TilePosition enemyStartLoc;
-        static BWAPI::TilePosition enemyStartLocDeduced = BWAPI::TilePositions::Unknown;
-        static std::string enemyName;
-        static std::string enemyNameUpperCase;
-        static std::string enemyFileName;
-        static std::string enemyReadFilePath;
 
         auto beginsWith =
             [](const std::string& baseStr, const std::string& comparisonStr)
@@ -1030,7 +1026,11 @@ void ZZZKBotAIModule::onFrame()
                 enemyReadFilePath = readDirPath + enemyFileName;
                 enemyWriteFilePath = writeDirPath + enemyFileName;
                 enemyNameUpperCase = enemyName;
-                std::transform(enemyNameUpperCase.begin(), enemyNameUpperCase.end(),enemyNameUpperCase.begin(), ::toupper);
+                std::transform(
+                    enemyNameUpperCase.begin(),
+                    enemyNameUpperCase.end(),
+                    enemyNameUpperCase.begin(),
+                    [](int c) -> char { return static_cast<char>(::toupper(c)); });
 
                 // Block to restrict scope of variables.
                 {
@@ -1041,6 +1041,7 @@ void ZZZKBotAIModule::onFrame()
                         std::string line;
                         std::string tmpPlayerName;
                         std::string tmpRace;
+                        bool tmpIsUpdatingSSAllowed = false;
                         bool tmpIs4PoolBO = false;
                         bool tmpIsSpeedlingBO = false;
                         bool tmpIsHydraRushBO = false;
@@ -1053,13 +1054,14 @@ void ZZZKBotAIModule::onFrame()
                         int tmpNumSunkensVsTerran = tmpNumSunkens;
                         int tmpNumSunkensVsZerg = tmpNumSunkens;
                         int tmpEOLSentinel = -1;
-            
+
                         while(getline(ifs, line) && ifs)
                         {
                             std::istringstream iss(line);
-            
+
                             iss >> tmpPlayerName;
                             iss >> tmpRace;
+                            iss >> tmpIsUpdatingSSAllowed;
                             iss >> tmpIs4PoolBO;
                             iss >> tmpIsSpeedlingBO;
                             iss >> tmpIsHydraRushBO;
@@ -1078,9 +1080,10 @@ void ZZZKBotAIModule::onFrame()
                                     iss >> tmpNumSunkensVsZerg;
                                     iss >> tmpEOLSentinel;
                                 }
-    
+
                                 if (iss && tmpEOLSentinel == 1)
                                 {
+                                    isUpdatingSSAllowed = tmpIsUpdatingSSAllowed;
                                     ss.is4PoolBO = tmpIs4PoolBO;
                                     ss.isSpeedlingBO = tmpIsSpeedlingBO;
                                     ss.isHydraRushBO = tmpIsHydraRushBO;
@@ -1089,12 +1092,15 @@ void ZZZKBotAIModule::onFrame()
                                     ss.isEnemyWorkerRusher = tmpIsEnemyWorkerRusher;
                                     ss.isNumSunkensDecidedAfterScoutEnemyRace = tmpIsNumSunkensDecidedAfterScoutEnemyRace;
                                     ss.numSunkens = tmpNumSunkens;
+                                    ss.numSunkensVsProtoss = tmpNumSunkensVsProtoss;
+                                    ss.numSunkensVsTerran = tmpNumSunkensVsTerran;
+                                    ss.numSunkensVsZerg = tmpNumSunkensVsZerg;
                                     found = true;
                                     break;
                                 }
                             }
                         }
-    
+
                         if (found)
                         {
                             break;
@@ -1113,6 +1119,16 @@ void ZZZKBotAIModule::onFrame()
                     ss.isSpeedlingBO = false;
                     ss.isHydraRushBO = false;
                     ss.isMutaRushBO = false;
+                    ss.numSunkens = 0;
+                    break;
+                }
+
+                if (isMapPlasma_v_1_0)
+                {
+                    ss.is4PoolBO = false;
+                    ss.isSpeedlingBO = false;
+                    ss.isHydraRushBO = false;
+                    ss.isMutaRushBO = true;
                     ss.numSunkens = 0;
                     break;
                 }
@@ -1157,7 +1173,7 @@ void ZZZKBotAIModule::onFrame()
                     }
                 }
             }
-    
+
             const std::string tmpFileExtension = "tmp";
             const std::string tmpFilePath0 = enemyWriteFilePath + ".0." + tmpFileExtension;
             const std::string tmpFilePath1 = enemyWriteFilePath + ".1." + tmpFileExtension;
@@ -1181,7 +1197,7 @@ void ZZZKBotAIModule::onFrame()
                     {
                         isFileCopyNeeded = true;
                         isFileCopyFailed = true;
-    
+
                         // Block to restrict scope of variables.
                         {
                             std::ofstream tmpFileOFS(tmpFilePath0, std::ios::binary);
@@ -1197,7 +1213,7 @@ void ZZZKBotAIModule::onFrame()
                         }
                     }
                 }
-    
+
                 if (isFileCopyNeeded && !isFileCopyFailed)
                 {
                     isFileCopyFailed = true;
@@ -1254,8 +1270,8 @@ void ZZZKBotAIModule::onFrame()
                         // Validate the types of fields in the line are in the expected sequence and complete,
                         // and read and validate the relevant fields into variables.
 
-                        const size_t minInitUpdateFields = 91;
-                        size_t minFieldsExpected = minInitUpdateFields;
+                        const std::size_t minInitUpdateFields = 91;
+                        std::size_t minFieldsExpected = minInitUpdateFields;
                         if (fields.size() < minInitUpdateFields ||
                             fields.at(fields.size() - 1) != endOfLineSentinel ||
                             fields.at(fields.size() - 2) != endOfUpdateSentinel ||
@@ -1266,29 +1282,29 @@ void ZZZKBotAIModule::onFrame()
                             fields.at(4) != initUpdateSignifier ||
                             fields.at(5) != dataFileExtension ||
                             fields.at(6) != pathFieldDelimiter ||
-                            fields.at(7) != std::to_string(myVersionMajor) ||
-                            fields.at(8) != std::to_string(myVersionMinor))
+                            fields.at(7) != std::to_string(dataVersionMajor) ||
+                            fields.at(8) != std::to_string(dataVersionMinor))
                         {
                             // TODO: corrupt or incomplete line detected (e.g. bot killed before onEnd()), so provide an error message?
                             continue;
                         }
 
                         // Variables for parsing relevant fields for learning purposes.
-                        const int myRacePickedInd = 28;
+                        const std::size_t myRacePickedInd = 28;
                         std::string tmpMyRacePicked = fields.at(myRacePickedInd);
                         if (tmpMyRacePicked != Broodwar->self()->getRace().getName())
                         {
                             continue;
                         }
 
-                        const int myRaceRolledInd = 29;
+                        const std::size_t myRaceRolledInd = 29;
                         std::string tmpMyRaceRolled = fields.at(myRaceRolledInd);
                         if (tmpMyRaceRolled != Broodwar->self()->getRace().getName())
                         {
                             continue;
                         }
 
-                        const int myStartLocXInd = 30;
+                        const std::size_t myStartLocXInd = 30;
                         int tmpMyStartLocX = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1299,7 +1315,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int myStartLocYInd = 31;
+                        const std::size_t myStartLocYInd = 31;
                         int tmpMyStartLocY = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1310,7 +1326,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int enemyPlayerIDInd = 33;
+                        const std::size_t enemyPlayerIDInd = 33;
                         int tmpEnemyPlayerID = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1321,16 +1337,16 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int enemyPlayerNameInd = 35;
+                        const std::size_t enemyPlayerNameInd = 35;
                         std::string tmpEnemyPlayerName = fields.at(enemyPlayerNameInd);
 
-                        const int enemyRacePickedInd = 36;
+                        const std::size_t enemyRacePickedInd = 36;
                         std::string tmpEnemyRacePicked = fields.at(enemyRacePickedInd);
 
-                        const int enemyRaceInitInd = 37;
+                        const std::size_t enemyRaceInitInd = 37;
                         std::string tmpEnemyRaceInit = fields.at(enemyRaceInitInd);
 
-                        const int enemyStartLocDeducedXInd = 38;
+                        const std::size_t enemyStartLocDeducedXInd = 38;
                         int tmpEnemyStartLocDeducedX = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1341,7 +1357,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int enemyStartLocDeducedYInd = 39;
+                        const std::size_t enemyStartLocDeducedYInd = 39;
                         int tmpEnemyStartLocDeducedY = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1352,14 +1368,14 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int mapHashInd = 46;
+                        const std::size_t mapHashInd = 46;
                         std::string tmpMapHash = fields.at(mapHashInd);
 
                         // TODO: could consider using these for learning too (and/or map area).
                         //int tmpMapWidth;
                         //int tmpMapHeight;
 
-                        const int isCompleteMapInformationEnabledInd = 49;
+                        const std::size_t isCompleteMapInformationEnabledInd = 49;
                         bool tmpIsCompleteMapInformationEnabled = false;
                         // Block to restrict scope of variables.
                         {
@@ -1375,7 +1391,7 @@ void ZZZKBotAIModule::onFrame()
                             continue;
                         }
 
-                        const int numStartLocationsInd = 51;
+                        const std::size_t numStartLocationsInd = 51;
                         int tmpNumStartLocations = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1394,7 +1410,7 @@ void ZZZKBotAIModule::onFrame()
                         if (BWAPI::TilePosition(tmpEnemyStartLocDeducedX, tmpEnemyStartLocDeducedY) == BWAPI::TilePositions::Unknown &&
                             tmpNumStartLocations == 2)
                         {
-                            for (int startLocXInd = numStartLocationsInd + 1, startLocYInd = numStartLocationsInd + 2; startLocXInd < numStartLocationsInd + (tmpNumStartLocations * 2); startLocXInd += 2, startLocYInd += 2)
+                            for (std::size_t startLocXInd = numStartLocationsInd + 1, startLocYInd = numStartLocationsInd + 2; startLocXInd < numStartLocationsInd + (tmpNumStartLocations * 2); startLocXInd += 2, startLocYInd += 2)
                             {
                                 int tmpStartLocX = -1;
                                 // Block to restrict scope of variables.
@@ -1405,7 +1421,7 @@ void ZZZKBotAIModule::onFrame()
                                         continue;
                                     }
                                 }
-        
+
                                 int tmpStartLocY = -1;
                                 // Block to restrict scope of variables.
                                 {
@@ -1427,7 +1443,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int tmpOffset = tmpNumStartLocations * 2;
+                        const std::size_t tmpOffset = ((std::size_t) tmpNumStartLocations) * 2;
                         minFieldsExpected += tmpOffset;
 
                         if (fields.size() < minFieldsExpected ||
@@ -1443,7 +1459,7 @@ void ZZZKBotAIModule::onFrame()
                         //int tmpLatencyFrames;
                         //bool tmpIsLatComEnabled;
 
-                        const int timerAtGameStartInd = 74 + tmpOffset;
+                        const std::size_t timerAtGameStartInd = 68 + tmpOffset;
                         int tmpTimerAtGameStart = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1454,7 +1470,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int is4PoolBOInd = 74 + tmpOffset;
+                        const std::size_t is4PoolBOInd = 74 + tmpOffset;
                         bool tmpIs4PoolBO = false;
                         // Block to restrict scope of variables.
                         {
@@ -1465,7 +1481,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isSpeedlingBOInd = 75 + tmpOffset;
+                        const std::size_t isSpeedlingBOInd = 75 + tmpOffset;
                         bool tmpIsSpeedlingBO = false;
                         // Block to restrict scope of variables.
                         {
@@ -1476,7 +1492,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isHydraRushBOInd = 76 + tmpOffset;
+                        const std::size_t isHydraRushBOInd = 76 + tmpOffset;
                         bool tmpIsHydraRushBO = false;
                         // Block to restrict scope of variables.
                         {
@@ -1487,7 +1503,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isMutaRushBODecidedAfterScoutEnemyRaceInd = 77 + tmpOffset;
+                        const std::size_t isMutaRushBODecidedAfterScoutEnemyRaceInd = 77 + tmpOffset;
                         bool tmpIsMutaRushBODecidedAfterScoutEnemyRace = false;
                         // Block to restrict scope of variables.
                         {
@@ -1498,7 +1514,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isMutaRushBOInd = 78 + tmpOffset;
+                        const std::size_t isMutaRushBOInd = 78 + tmpOffset;
                         bool tmpIsMutaRushBO = false;
                         // Block to restrict scope of variables.
                         {
@@ -1509,7 +1525,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isMutaRushBOVsProtossInd = 79 + tmpOffset;
+                        const std::size_t isMutaRushBOVsProtossInd = 79 + tmpOffset;
                         bool tmpIsMutaRushBOVsProtoss = false;
                         // Block to restrict scope of variables.
                         {
@@ -1520,7 +1536,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isMutaRushBOVsTerranInd = 80 + tmpOffset;
+                        const std::size_t isMutaRushBOVsTerranInd = 80 + tmpOffset;
                         bool tmpIsMutaRushBOVsTerran = false;
                         // Block to restrict scope of variables.
                         {
@@ -1531,7 +1547,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isMutaRushBOVsZergInd = 81 + tmpOffset;
+                        const std::size_t isMutaRushBOVsZergInd = 81 + tmpOffset;
                         bool tmpIsMutaRushBOVsZerg = false;
                         // Block to restrict scope of variables.
                         {
@@ -1542,7 +1558,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isSpeedlingPushDeferredInd = 82 + tmpOffset;
+                        const std::size_t isSpeedlingPushDeferredInd = 82 + tmpOffset;
                         bool tmpIsSpeedlingPushDeferred = false;
                         // Block to restrict scope of variables.
                         {
@@ -1553,7 +1569,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isEnemyWorkerRusherInd = 83 + tmpOffset;
+                        const std::size_t isEnemyWorkerRusherInd = 83 + tmpOffset;
                         bool tmpIsEnemyWorkerRusher = false;
                         // Block to restrict scope of variables.
                         {
@@ -1564,7 +1580,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isNumSunkensDecidedAfterScoutEnemyRaceInd = 84 + tmpOffset;
+                        const std::size_t isNumSunkensDecidedAfterScoutEnemyRaceInd = 84 + tmpOffset;
                         bool tmpIsNumSunkensDecidedAfterScoutEnemyRace = false;
                         // Block to restrict scope of variables.
                         {
@@ -1575,7 +1591,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int numSunkensInd = 85 + tmpOffset;
+                        const std::size_t numSunkensInd = 85 + tmpOffset;
                         int tmpNumSunkens = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1586,7 +1602,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int numSunkensVsProtossInd = 86 + tmpOffset;
+                        const std::size_t numSunkensVsProtossInd = 86 + tmpOffset;
                         int tmpNumSunkensVsProtoss = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1597,7 +1613,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int numSunkensVsTerranInd = 87 + tmpOffset;
+                        const std::size_t numSunkensVsTerranInd = 87 + tmpOffset;
                         int tmpNumSunkensVsTerran = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1608,7 +1624,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int numSunkensVsZergInd = 88 + tmpOffset;
+                        const std::size_t numSunkensVsZergInd = 88 + tmpOffset;
                         int tmpNumSunkensVsZerg = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1659,7 +1675,7 @@ void ZZZKBotAIModule::onFrame()
                         while (fields.at(minFieldsExpected) == onPlayerLeftUpdateSignifier ||
                                fields.at(minFieldsExpected) == raceScoutedUpdateSignifier)
                         {
-                            const int tmpUpdateSignifierInd = minFieldsExpected;
+                            const std::size_t tmpUpdateSignifierInd = minFieldsExpected;
                             const std::string tmpUpdateSignifier = fields.at(tmpUpdateSignifierInd);
                             if (tmpUpdateSignifier == onPlayerLeftUpdateSignifier)
                             {
@@ -1688,7 +1704,7 @@ void ZZZKBotAIModule::onFrame()
 
                             if (tmpUpdateSignifier == onPlayerLeftUpdateSignifier)
                             {
-                                const int onEnemyPlayerLeftFrameCountInd = tmpUpdateSignifierInd + 1;
+                                const std::size_t onEnemyPlayerLeftFrameCountInd = tmpUpdateSignifierInd + 1;
                                 int tmpOnEnemyPlayerLeftFrameCount = -1;
                                 // Block to restrict scope of variables.
                                 {
@@ -1700,7 +1716,7 @@ void ZZZKBotAIModule::onFrame()
                                     }
                                 }
 
-                                const int onEnemyPlayerLeftPlayerIDInd = tmpUpdateSignifierInd + 6;
+                                const std::size_t onEnemyPlayerLeftPlayerIDInd = tmpUpdateSignifierInd + 6;
                                 int tmpOnEnemyPlayerLeftPlayerID = -1;
                                 // Block to restrict scope of variables.
                                 {
@@ -1720,7 +1736,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                             else if (tmpUpdateSignifier == raceScoutedUpdateSignifier)
                             {
-                                const int enemyRaceScoutedFrameCountInd = tmpUpdateSignifierInd + 1;
+                                const std::size_t enemyRaceScoutedFrameCountInd = tmpUpdateSignifierInd + 1;
                                 // Block to restrict scope of variables.
                                 {
                                     std::istringstream iss(fields.at(enemyRaceScoutedFrameCountInd));
@@ -1731,7 +1747,7 @@ void ZZZKBotAIModule::onFrame()
                                     }
                                 }
 
-                                const int enemyRaceScoutedInd = tmpUpdateSignifierInd + 6;
+                                const std::size_t enemyRaceScoutedInd = tmpUpdateSignifierInd + 6;
                                 tmpEnemyRaceScouted = fields.at(enemyRaceScoutedInd);
                             }
                         }
@@ -1783,7 +1799,7 @@ void ZZZKBotAIModule::onFrame()
                             continue;
                         }
 
-                        const int onEndFrameCountInd = minFieldsExpected - 8;
+                        const std::size_t onEndFrameCountInd = minFieldsExpected - 8;
                         int tmpOnEndFrameCount = -1;
                         // Block to restrict scope of variables.
                         {
@@ -1794,7 +1810,7 @@ void ZZZKBotAIModule::onFrame()
                             }
                         }
 
-                        const int isWinnerInd = minFieldsExpected - 3;
+                        const std::size_t isWinnerInd = minFieldsExpected - 3;
                         bool tmpIsWinner = false;
                         // Block to restrict scope of variables.
                         {
@@ -1803,6 +1819,12 @@ void ZZZKBotAIModule::onFrame()
                             {
                                 continue;
                             }
+                        }
+
+                        // Learn Plasma v1.0 map independently to other maps.
+                        if (isMapPlasma_v_1_0 != (tmpMapHash == mapHashPlasma_v_1_0))
+                        {
+                            continue;
                         }
 
                         // Add the data to lookup maps for learning purposes.
@@ -1874,249 +1896,687 @@ void ZZZKBotAIModule::onFrame()
                 }
             }
 
-            int mostSpecificLostGameID = -1;
-            // Return value is whether it ends up updating the strategy settings.
-            auto updateStratSettingsLambda =
-                [this, &mostSpecificLostGameID](auto& mapWithNumOutcomesMap) -> bool
-                {
-                    if (mapWithNumOutcomesMap.gameIDIfWonLastGame >= 0)
+            if (isUpdatingSSAllowed)
+            {
+                StratSettings ssBest = ss;
+                std::set<StratSettings> consideredSSSet;
+                double thompsonSampleBest = -1.0;
+                auto& learningMapAuto = learningMap;
+                // Return value is whether it ends up updating the strategy settings.
+                auto updateStratSettingsLambda =
+                    [&learningMapAuto, &ssBest, &consideredSSSet, &thompsonSampleBest, &genRand]
+                    (auto& mapWithNumOutcomesMap)
                     {
-                        ss = gameIDToStratSettings[mapWithNumOutcomesMap.gameIDIfWonLastGame];
-                        return true;
-                    }
-                    else
-                    {
-                        if (mostSpecificLostGameID < 0 && mapWithNumOutcomesMap.gameIDIfLostLastGame >= 0)
-                        {
-                            mostSpecificLostGameID = mapWithNumOutcomesMap.gameIDIfLostLastGame;
-                        }
-
-                        // If we have won with any other strategies in this scenario, pick a strategy from
-                        // amongst the other strategies we have won with in this scenario, but pick randomly,
-                        // weighted by each strategy's individual win ratio in this scenario.
-                        std::map<StratSettings, double> ssToTotWinRatiosSoFarMap;
-                        double totWinRatios = 0.0;
-                        double expectation = 0.0;
+                        // If we have tried any other strategies in a matching scenario or a partially
+                        // matching scenario, pick a strategy from amongst them, but pick randomly, using
+                        // Thompson sampling for Bernoulli bandits (a type of Bayesian bandit algorithm)
+                        // based on the number of wins and losses for each respective strategy in the most
+                        // similar scenario to this one that we have played at least one game using that
+                        // strategy.
+                        // Note: this approach is designed against opponents that don't learn - it might not
+                        // work very well against bots that learn.
                         for (auto& ssToWinsIter : mapWithNumOutcomesMap.numOutcomes[true])
                         {
                             const StratSettings ssTmp = ssToWinsIter.first;
-                            if (mostSpecificLostGameID >= 0 && gameIDToStratSettings[mostSpecificLostGameID] == ssTmp)
+                            if (consideredSSSet.find(ssTmp) != consideredSSSet.end())
                             {
                                 continue;
                             }
 
-                            const double numWins = ssToWinsIter.second;
-                            if (numWins == 0.0)
+                            const int numWins = ssToWinsIter.second;
+                            if (numWins == 0)
                             {
+                                // We will handle these later.
                                 continue;
                             }
-        
-                            auto& ssToLossesIter = mapWithNumOutcomesMap.numOutcomes[false].find(ssTmp);
-                            const double numOutcomes =
-                                numWins +
-                                (ssToLossesIter == mapWithNumOutcomesMap.numOutcomes[false].end() ? 0.0 : ssToLossesIter->second);
-                            // Just for safety (shouldn't happen).
-                            if (numOutcomes == 0.0)
+
+                            consideredSSSet.emplace(ssTmp);
+
+                            const auto& ssToLossesIter = mapWithNumOutcomesMap.numOutcomes[false].find(ssTmp);
+                            const int numLosses =
+                                (ssToLossesIter == mapWithNumOutcomesMap.numOutcomes[false].end() ? 0 : ssToLossesIter->second);
+
+                            beta_distribution<> beta((double) (numWins + 1), (double) (numLosses + 1));
+                            const double thompsonSample = beta(genRand);
+                            if (thompsonSample > thompsonSampleBest)
                             {
+                                thompsonSampleBest = thompsonSample;
+                                ssBest = ssTmp;
                                 continue;
                             }
-                            const double winRatio = numWins / numOutcomes;
-                            expectation = ((expectation * totWinRatios) + (winRatio * winRatio)) / (totWinRatios + winRatio);
-                            totWinRatios += winRatio;
-                            ssToTotWinRatiosSoFarMap[ssTmp] = totWinRatios;
                         }
 
-                        // Treat expectation of 75% win ratio or more as good enough.
-                        if (expectation >= 0.75)
+                        for (auto& ssToLossesIter : mapWithNumOutcomesMap.numOutcomes[false])
                         {
-                            const double randDouble = ((double)rand() / RAND_MAX) * totWinRatios;
-                            for (auto& ssToTotWinRatiosSoFarIter : ssToTotWinRatiosSoFarMap)
+                            const StratSettings ssTmp = ssToLossesIter.first;
+                            if (consideredSSSet.find(ssTmp) != consideredSSSet.end())
                             {
-                                if (randDouble <= ssToTotWinRatiosSoFarIter.second)
-                                {
-                                    ss = ssToTotWinRatiosSoFarIter.first;
-                                    return true;
-                                }
+                                continue;
+                            }
+
+                            const int numLosses = ssToLossesIter.second;
+                            if (numLosses == 0)
+                            {
+                                continue;
+                            }
+
+                            consideredSSSet.emplace(ssTmp);
+
+                            const auto& ssToWinsIter = mapWithNumOutcomesMap.numOutcomes[true].find(ssTmp);
+                            const int numWins =
+                                (ssToWinsIter == mapWithNumOutcomesMap.numOutcomes[true].end() ? 0 : ssToWinsIter->second);
+
+                            beta_distribution<> beta((double) 1, (double) (numLosses + 1));
+                            const double thompsonSample = beta(genRand);
+                            if (thompsonSample > thompsonSampleBest)
+                            {
+                                thompsonSampleBest = thompsonSample;
+                                ssBest = ssTmp;
+                                continue;
                             }
                         }
-                    }
+                    };
 
-                    return false;
-                };
-
-            // Choose strategy settings based on the learning data lookup maps.
-            // For the most specific scenario that matches the current scenario and we have
-            // played a game for, if we won the last game we played in that scenario, use the
-            // same strategy settings as we used then.
-            bool isUpdatedStratSettings = false;
-            auto& enemyRaceInitMap = learningMap.enemyRaceInitMap;
-            auto& enemyRaceInitIter = enemyRaceInitMap.val.find(enemyRaceInit.getName());
-            if (enemyRaceInitIter != learningMap.enemyRaceInitMap.val.end())
-            {
-                auto& enemyRaceScoutedMap = enemyRaceInitIter->second;
-                auto& enemyRaceScoutedIter = enemyRaceScoutedMap.val.find(enemyRaceInit.getName());
-                if (enemyRaceScoutedIter != enemyRaceScoutedMap.val.end())
+                // Choose strategy settings based on the learning data lookup maps.
+                auto& enemyRaceInitMap = learningMap.enemyRaceInitMap;
+                const auto& enemyRaceInitIter = enemyRaceInitMap.val.find(enemyRaceInit.getName());
+                if (enemyRaceInitIter != learningMap.enemyRaceInitMap.val.end())
                 {
-                    auto& numStartLocationsMap = enemyRaceScoutedIter->second;
-                    auto& numStartLocationsIter = numStartLocationsMap.val.find(Broodwar->getStartLocations().size());
-                    if (numStartLocationsIter != numStartLocationsMap.val.end())
+                    auto& enemyRaceScoutedMap = enemyRaceInitIter->second;
+                    const auto& enemyRaceScoutedIter = enemyRaceScoutedMap.val.find(enemyRaceInit.getName());
+                    if (enemyRaceScoutedIter != enemyRaceScoutedMap.val.end())
                     {
-                        auto& mapHashMap = numStartLocationsIter->second;
-                        auto& mapHashIter = mapHashMap.val.find(Broodwar->mapHash());
-                        if (mapHashIter != mapHashMap.val.end())
+                        auto& numStartLocationsMap = enemyRaceScoutedIter->second;
+                        const auto& numStartLocationsIter = numStartLocationsMap.val.find((int) Broodwar->getStartLocations().size());
+                        if (numStartLocationsIter != numStartLocationsMap.val.end())
                         {
-                            auto& myStartLocationMap = mapHashIter->second;
-                            auto& myStartLocIter = myStartLocationMap.val.find(myStartLoc);
-                            if (myStartLocIter != myStartLocationMap.val.end())
+                            auto& mapHashMap = numStartLocationsIter->second;
+                            const auto& mapHashIter = mapHashMap.val.find(Broodwar->mapHash());
+                            if (mapHashIter != mapHashMap.val.end())
                             {
-                                auto& enemyStartLocDeducedMap = myStartLocIter->second;
-                                auto& enemyStartLocDeducedIter = enemyStartLocDeducedMap.val.find(enemyStartLocDeduced);
-                                if (enemyStartLocDeducedIter != enemyStartLocDeducedMap.val.end())
+                                auto& myStartLocationMap = mapHashIter->second;
+                                const auto& myStartLocIter = myStartLocationMap.val.find(myStartLoc);
+                                if (myStartLocIter != myStartLocationMap.val.end())
                                 {
-                                    auto& outcomeMap = enemyStartLocDeducedIter->second;
-                                    isUpdatedStratSettings = updateStratSettingsLambda(outcomeMap);
+                                    auto& enemyStartLocDeducedMap = myStartLocIter->second;
+                                    const auto& enemyStartLocDeducedIter = enemyStartLocDeducedMap.val.find(enemyStartLocDeduced);
+                                    if (enemyStartLocDeducedIter != enemyStartLocDeducedMap.val.end())
+                                    {
+                                        auto& outcomeMap = enemyStartLocDeducedIter->second;
+                                        updateStratSettingsLambda(outcomeMap);
+                                    }
+
+                                    updateStratSettingsLambda(enemyStartLocDeducedMap);
                                 }
 
-                                if (!isUpdatedStratSettings)
-                                {
-                                    isUpdatedStratSettings = updateStratSettingsLambda(enemyStartLocDeducedMap);
-                                }
+                                updateStratSettingsLambda(myStartLocationMap);
                             }
 
-                            if (!isUpdatedStratSettings)
-                            {
-                                isUpdatedStratSettings = updateStratSettingsLambda(myStartLocationMap);
-                            }
+                            updateStratSettingsLambda(mapHashMap);
                         }
 
-                        if (!isUpdatedStratSettings)
-                        {
-                            isUpdatedStratSettings = updateStratSettingsLambda(mapHashMap);
-                        }
+                        updateStratSettingsLambda(numStartLocationsMap);
                     }
 
-                    if (!isUpdatedStratSettings)
+                    updateStratSettingsLambda(enemyRaceScoutedMap);
+                }
+
+                updateStratSettingsLambda(enemyRaceInitMap);
+
+                // Use a weighting system if picking from amongst the untried strategies.
+                // Weight stats assuming all strategies are untried (i.e. as though the
+                // default strategy has not been tried), depending on whether the enemy
+                // is Random race and whether it is Plasma map:
+                // 
+                // vs not Random:        numWeight:     179; totWeight:         121,064; maxWeight:         6,936 i.e. 17 * 17 * 4 * 6                    =         6,936
+                // vs Random not Plasma: numWeight:  66,299; totWeight:     355,352,733; maxWeight:    13,982,976 i.e. 17 * 17 * 4 * 6 * 504 * 4          =    13,982,976
+                // vs Random Plasma:     numWeight: 464,098; totWeight: 104,368,786,560; maxWeight: 3,355,914,240 i.e. 17 * 17 * 4 * 6 * 504 * 4 * 60 * 4 = 3,355,914,240
+                std::map<unsigned long long, StratSettings> stratSettingsWeightMap;
+                unsigned long long totWeight = 0;
+
+                auto setWeightLambda =
+                    [&consideredSSSet]
+                    (auto& stratSettingsWeightMap, unsigned long long& totWeight, auto& ssTmp, const unsigned long long weight)
                     {
-                        isUpdatedStratSettings = updateStratSettingsLambda(numStartLocationsMap);
+                        if (consideredSSSet.find(ssTmp) != consideredSSSet.end())
+                            return;
+
+                        // TODO: check for overrun?
+                        totWeight += weight;
+                        /*
+                        if (totWeight < 1)
+                        {
+                            // TODO: error, because shouldn't happen (overrun?).
+                        }
+                        */
+                        stratSettingsWeightMap.emplace(totWeight - 1, ssTmp);
+                    };
+
+                auto setIsEnemyWorkerRusherWeightsLambda =
+                    [&consideredSSSet, &setWeightLambda]
+                    (auto& stratSettingsWeightMap, unsigned long long& totWeight, auto& ssTmp, const unsigned long long weight)
+                    {
+                        for (int isEnemyWorkerRusher = 0; isEnemyWorkerRusher < 2; ++isEnemyWorkerRusher)
+                        {
+                            unsigned long long newWeight = weight;
+                            if (isEnemyWorkerRusher)
+                            {
+                                ssTmp.isEnemyWorkerRusher = true;
+                                newWeight *= 3;
+                            }
+                            else
+                            {
+                                ssTmp.isEnemyWorkerRusher = false;
+                                // I.E. a 15% chance that isEnemyWorkerRusher.
+                                newWeight *= 17;
+                            }
+
+                            setWeightLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight);
+                        }
+                    };
+
+                auto setIsMutaRushBOWeightsLambda =
+                    [&consideredSSSet, &setIsEnemyWorkerRusherWeightsLambda]
+                    (auto& stratSettingsWeightMap, unsigned long long& totWeight, auto& ssTmp, const unsigned long long weight)
+                    {
+                        for (int isMutaRushBO = 0; isMutaRushBO < 2; ++isMutaRushBO)
+                        {
+                            unsigned long long newWeight = weight;
+                            if (isMutaRushBO)
+                            {
+                                ssTmp.isMutaRushBO = true;
+                                newWeight *= 17;
+                            }
+                            else
+                            {
+                                ssTmp.isMutaRushBO = false;
+                                // I.E. a 85% chance that isMutaRushBO.
+                                newWeight *= 3;
+                            }
+
+                            setIsEnemyWorkerRusherWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight);
+                        }
+                    };
+
+                auto setIsSpeedlingPushDeferredWeightsLambda =
+                    [&consideredSSSet, &setIsMutaRushBOWeightsLambda]
+                    (auto& stratSettingsWeightMap, unsigned long long& totWeight, auto& ssTmp, const unsigned long long weight)
+                    {
+                        for (int isSpeedlingPushDeferred = 0; isSpeedlingPushDeferred < 2; ++isSpeedlingPushDeferred)
+                        {
+                            unsigned long long newWeight = weight;
+                            if (isSpeedlingPushDeferred)
+                            {
+                                if (!ssTmp.isSpeedlingBO)
+                                    continue;
+
+                                ssTmp.isSpeedlingPushDeferred = true;
+                            }
+                            else
+                            {
+                                ssTmp.isSpeedlingPushDeferred = false;
+                                // I.E. in isSpeedlingBO, a 25% chance that isSpeedlingPushDeferred.
+                                newWeight *= (ssTmp.isSpeedlingBO ? 3 : 4);
+                            }
+
+                            setIsMutaRushBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight);
+                        }
+                    };
+
+                auto setBOWeightsLambda =
+                    [&consideredSSSet, &setIsSpeedlingPushDeferredWeightsLambda]
+                    (auto& stratSettingsWeightMap, unsigned long long& totWeight, auto& ssTmp, const unsigned long long weight)
+                    {
+                        // I.E. is4PoolBO vs isSpeedlingBO vs isHydraRushBO vs neither.
+                        for (int BONum = 0; BONum < 4; ++BONum)
+                        {
+                            ssTmp.is4PoolBO = (BONum == 0);
+                            ssTmp.isSpeedlingBO = (BONum == 1);
+                            ssTmp.isHydraRushBO = (BONum == 2);
+                            setIsSpeedlingPushDeferredWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, weight);
+                        }
+                    };
+
+                auto setNumSunkensAndVsRacesWeightsLambda =
+                    [&consideredSSSet, &setBOWeightsLambda, &enemyRaceInitAuto]
+                    (auto& stratSettingsWeightMap, unsigned long long& totWeight, auto& ssTmp, const unsigned long long weight)
+                    {
+                        for (int numSunkensCase = 0; numSunkensCase < 9; ++numSunkensCase)
+                        {
+                            unsigned long long newWeight = weight;
+                            switch (numSunkensCase)
+                            {
+                                case 0:
+                                    ssTmp.numSunkens = 0;
+                                    // 20% chance.
+                                    newWeight *= 4;
+                                    break;
+                                case 1:
+                                    ssTmp.numSunkens = 1;
+                                    // 30% chance.
+                                    newWeight *= 6;
+                                    break;
+                                case 2:
+                                    ssTmp.numSunkens = 2;
+                                    // 15% chance.
+                                    newWeight *= 3;
+                                    break;
+                                case 3:
+                                    ssTmp.numSunkens = 3;
+                                    // 10% chance.
+                                    newWeight *= 2;
+                                    break;
+                                // The rest each have a 5% chance.
+                                case 4:
+                                    ssTmp.numSunkens = 5;
+                                    break;
+                                case 5:
+                                    ssTmp.numSunkens = 8;
+                                    break;
+                                case 6:
+                                    ssTmp.numSunkens = 11;
+                                    break;
+                                case 7:
+                                    ssTmp.numSunkens = 15;
+                                    break;
+                                case 8:
+                                    ssTmp.numSunkens = 19;
+                                    break;
+                                // TODO: error, because shouldn't happen.
+                                default:
+                                    ssTmp.numSunkens = 1;
+                                    break;
+                            }
+
+                            if (!ssTmp.isNumSunkensDecidedAfterScoutEnemyRace)
+                            {
+                                if (enemyRaceInitAuto == BWAPI::Races::Unknown)
+                                {
+                                    // I.E. there are 504 permutations to pick three numbers from eight distinct numbers
+                                    // with replacement such that not all three numbers are the same ((8^3) - 8).
+                                    newWeight *= 504;
+                                }
+
+                                ssTmp.numSunkensVsProtoss = 1;
+                                ssTmp.numSunkensVsTerran = 1;
+                                ssTmp.numSunkensVsZerg = 1;
+                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight);
+                            }
+                            else
+                            {
+                                const int numSunkensMin = ((ssTmp.numSunkens - 4) > 0 ? (ssTmp.numSunkens - 4) : 0);
+                                const int numSunkensMax = ((ssTmp.numSunkens == 0) ? 4 : ssTmp.numSunkens + 3);
+                                for (int i1 = numSunkensMin; i1 <= numSunkensMax; ++i1)
+                                {
+                                    for (int i2 = i1; i2 <= numSunkensMax; ++i2)
+                                    {
+                                        for (int i3 = i2; i3 <= numSunkensMax; ++i3)
+                                        {
+                                            unsigned long long newWeight2 = newWeight;
+                                            if (i1 == i2 && i2 == i3)
+                                                continue;
+
+                                            if (ssTmp.numSunkens <= 3)
+                                            {
+                                                // This takes into account the way in the randomization logic that some value(s)
+                                                // could have been reached by taking the absolute value of a negative number.
+                                                const int dupNumSunkensMin = 1;
+                                                const int dupNumSunkensMax = (ssTmp.numSunkens != 0 ? (4 - ssTmp.numSunkens) : 3);
+                                                if (i1 >= dupNumSunkensMin && i1 <= dupNumSunkensMax)
+                                                    newWeight2 *= 2;
+
+                                                if (i2 >= dupNumSunkensMin && i2 <= dupNumSunkensMax)
+                                                    newWeight2 *= 2;
+
+                                                if (i3 >= dupNumSunkensMin && i3 <= dupNumSunkensMax)
+                                                    newWeight2 *= 2;
+                                            }
+
+                                            if (i1 == i2)
+                                            {
+                                                ssTmp.numSunkensVsProtoss = i1;
+                                                ssTmp.numSunkensVsTerran = i1;
+                                                ssTmp.numSunkensVsZerg = i3;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                                ssTmp.numSunkensVsProtoss = i1;
+                                                ssTmp.numSunkensVsTerran = i3;
+                                                ssTmp.numSunkensVsZerg = i1;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                                ssTmp.numSunkensVsProtoss = i3;
+                                                ssTmp.numSunkensVsTerran = i1;
+                                                ssTmp.numSunkensVsZerg = i1;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                            }
+                                            else if (i2 == i3)
+                                            {
+                                                ssTmp.numSunkensVsProtoss = i1;
+                                                ssTmp.numSunkensVsTerran = i2;
+                                                ssTmp.numSunkensVsZerg = i2;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                                ssTmp.numSunkensVsProtoss = i2;
+                                                ssTmp.numSunkensVsTerran = i1;
+                                                ssTmp.numSunkensVsZerg = i2;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                                ssTmp.numSunkensVsProtoss = i2;
+                                                ssTmp.numSunkensVsTerran = i2;
+                                                ssTmp.numSunkensVsZerg = i1;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                            }
+                                            else
+                                            {
+                                                // By analogy, if you roll three dice until the values don't all match,
+                                                // then sort the values, getting 1,3,4 is twice as likely as getting 1,3,3.
+                                                newWeight2 *= 2;
+
+                                                ssTmp.numSunkensVsProtoss = i1;
+                                                ssTmp.numSunkensVsTerran = i2;
+                                                ssTmp.numSunkensVsZerg = i3;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                                ssTmp.numSunkensVsProtoss = i1;
+                                                ssTmp.numSunkensVsTerran = i3;
+                                                ssTmp.numSunkensVsZerg = i2;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                                ssTmp.numSunkensVsProtoss = i2;
+                                                ssTmp.numSunkensVsTerran = i1;
+                                                ssTmp.numSunkensVsZerg = i3;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                                ssTmp.numSunkensVsProtoss = i2;
+                                                ssTmp.numSunkensVsTerran = i3;
+                                                ssTmp.numSunkensVsZerg = i1;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                                ssTmp.numSunkensVsProtoss = i3;
+                                                ssTmp.numSunkensVsTerran = i1;
+                                                ssTmp.numSunkensVsZerg = i2;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                                ssTmp.numSunkensVsProtoss = i3;
+                                                ssTmp.numSunkensVsTerran = i2;
+                                                ssTmp.numSunkensVsZerg = i1;
+                                                setBOWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight2);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                auto setIsNumSunkensDecidedAfterScoutEnemyRaceWeightsLambda =
+                    [&consideredSSSet, &setNumSunkensAndVsRacesWeightsLambda, &enemyRaceInitAuto]
+                    (auto& stratSettingsWeightMap, unsigned long long& totWeight, auto& ssTmp, const unsigned long long weight)
+                    {
+                        for (int isNumSunkensDecidedAfterScoutEnemyRace = 0; isNumSunkensDecidedAfterScoutEnemyRace < 2; ++isNumSunkensDecidedAfterScoutEnemyRace)
+                        {
+                            unsigned long long newWeight = weight;
+                            if (isNumSunkensDecidedAfterScoutEnemyRace)
+                            {
+                                if (enemyRaceInitAuto != BWAPI::Races::Unknown)
+                                    continue;
+
+                                ssTmp.isNumSunkensDecidedAfterScoutEnemyRace = true;
+                            }
+                            else
+                            {
+                                ssTmp.isNumSunkensDecidedAfterScoutEnemyRace = false;
+                                // I.E. if appropriate, a 20% chance that isNumSunkensDecidedAfterScoutEnemyRace.
+                                if (enemyRaceInitAuto == BWAPI::Races::Unknown)
+                                {
+                                    newWeight *= 4;
+                                }
+                            }
+
+                            setNumSunkensAndVsRacesWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight);
+                        }
+                    };
+
+                auto setIsMutaRushBOVsRacesWeightsLambda =
+                    [&consideredSSSet, &setIsNumSunkensDecidedAfterScoutEnemyRaceWeightsLambda, &isMapPlasma_v_1_0_Auto, &enemyRaceInitAuto]
+                    (auto& stratSettingsWeightMap, unsigned long long& totWeight, auto& ssTmp, const unsigned long long weight)
+                    {
+                        for (int raceComboCase = 0; raceComboCase < 6; ++raceComboCase)
+                        {
+                            unsigned long long newWeight = weight;
+                            if (!ssTmp.isMutaRushBODecidedAfterScoutEnemyRace)
+                            {
+                                if (raceComboCase != 0)
+                                    break;
+
+                                if (isMapPlasma_v_1_0_Auto && enemyRaceInitAuto == BWAPI::Races::Unknown)
+                                    newWeight *= 60;
+
+                                ssTmp.isMutaRushBOVsProtoss = true;
+                                ssTmp.isMutaRushBOVsTerran = true;
+                                ssTmp.isMutaRushBOVsZerg = true;
+                            }
+                            else
+                            {
+                                switch (raceComboCase)
+                                {
+                                    case 0:
+                                        ssTmp.isMutaRushBOVsProtoss = true;
+                                        ssTmp.isMutaRushBOVsTerran = true;
+                                        ssTmp.isMutaRushBOVsZerg = false;
+                                        break;
+                                    case 1:
+                                        ssTmp.isMutaRushBOVsProtoss = true;
+                                        ssTmp.isMutaRushBOVsTerran = false;
+                                        ssTmp.isMutaRushBOVsZerg = true;
+                                        break;
+                                    case 2:
+                                        ssTmp.isMutaRushBOVsProtoss = false;
+                                        ssTmp.isMutaRushBOVsTerran = true;
+                                        ssTmp.isMutaRushBOVsZerg = true;
+                                        break;
+                                    case 3:
+                                        ssTmp.isMutaRushBOVsProtoss = true;
+                                        ssTmp.isMutaRushBOVsTerran = false;
+                                        ssTmp.isMutaRushBOVsZerg = false;
+                                        break;
+                                    case 4:
+                                        ssTmp.isMutaRushBOVsProtoss = false;
+                                        ssTmp.isMutaRushBOVsTerran = true;
+                                        ssTmp.isMutaRushBOVsZerg = false;
+                                        break;
+                                    case 5:
+                                        ssTmp.isMutaRushBOVsProtoss = false;
+                                        ssTmp.isMutaRushBOVsTerran = false;
+                                        ssTmp.isMutaRushBOVsZerg = true;
+                                        break;
+                                    // TODO: error, because shouldn't happen.
+                                    default:
+                                        ssTmp.isMutaRushBOVsProtoss = true;
+                                        ssTmp.isMutaRushBOVsTerran = true;
+                                        ssTmp.isMutaRushBOVsZerg = true;
+                                        break;
+                                }
+
+                                // I.E. a 85% chance to muta rush vs exactly 2 races, and a 15% chance to muta vs exactly 1 race.
+                                newWeight *= (raceComboCase < 3 ? 17 : 3);
+                            }
+
+                            setIsNumSunkensDecidedAfterScoutEnemyRaceWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight);
+                        }
+                    };
+
+                auto setIsMutaRushBODecidedAfterScoutEnemyRaceWeightsLambda =
+                    [&consideredSSSet, &setIsMutaRushBOVsRacesWeightsLambda, &isMapPlasma_v_1_0_Auto, &enemyRaceInitAuto]
+                    (auto& stratSettingsWeightMap, unsigned long long& totWeight, auto& ssTmp, const unsigned long long weight)
+                    {
+                        for (int isMutaRushBODecidedAfterScoutEnemyRace = 0; isMutaRushBODecidedAfterScoutEnemyRace < 2; ++isMutaRushBODecidedAfterScoutEnemyRace)
+                        {
+                            unsigned long long newWeight = weight;
+                            if (isMutaRushBODecidedAfterScoutEnemyRace)
+                            {
+                                if (!isMapPlasma_v_1_0_Auto || enemyRaceInitAuto != BWAPI::Races::Unknown)
+                                    continue;
+
+                                ssTmp.isMutaRushBODecidedAfterScoutEnemyRace = true;
+                            }
+                            else
+                            {
+                                ssTmp.isMutaRushBODecidedAfterScoutEnemyRace = false;
+                                // I.E. if appropriate, a 20% chance that isMutaRushBODecidedAfterScoutEnemyRace.
+                                if (isMapPlasma_v_1_0_Auto && enemyRaceInitAuto == BWAPI::Races::Unknown)
+                                {
+                                    newWeight *= 4;
+                                }
+                            }
+
+                            setIsMutaRushBOVsRacesWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, newWeight);
+                        }
+                    };
+
+                auto setAllWeightsLambda =
+                    [&consideredSSSet, &setIsMutaRushBODecidedAfterScoutEnemyRaceWeightsLambda, &isMapPlasma_v_1_0_Auto, &enemyRaceInitAuto]
+                    (auto& stratSettingsWeightMap, unsigned long long& totWeight)
+                    {
+                        const unsigned long long weight = 1;
+                        StratSettings ssTmp;
+                        setIsMutaRushBODecidedAfterScoutEnemyRaceWeightsLambda(stratSettingsWeightMap, totWeight, ssTmp, weight);
+                    };
+
+                setAllWeightsLambda(stratSettingsWeightMap, totWeight);
+                if (!stratSettingsWeightMap.empty())
+                {
+                    // Compare the best Thompson sample against a dummy Thompson sample. This
+                    // represents picking from amongst all the remaining strategies at random as
+                    // though each is an individual Thompson sample. If we pick one of them, we
+                    // pick one of them using weightings rather than by using individual
+                    // Thompson samples. Note that one Thompson sample of beta(1 + n, 1) has the
+                    // same distribution as the highest of n Thompson samples of beta(1, 1).
+                    beta_distribution<> beta((double) (1 + stratSettingsWeightMap.size()), (double) 1);
+                    const double thompsonSample = beta(genRand);
+                    if (thompsonSample > thompsonSampleBest)
+                    {
+                        const auto& ind = stratSettingsWeightMap.lower_bound((genRand() % totWeight));
+                        if (ind != stratSettingsWeightMap.end())
+                        {
+                            thompsonSampleBest = thompsonSample;
+                            ssBest = ind->second;
+                        }
+                        /*
+                        // TODO: error (should be impossible).
+                        else
+                        {
+                            //...
+                        }
+                        */
                     }
                 }
 
-                if (!isUpdatedStratSettings)
+                // If have lost at least 5 games using the configured/default strategy...
+                const auto& ssToOverallNumLossesIter = learningMapAuto.enemyRaceInitMap.numOutcomes[false].find(ss);
+                if (ssToOverallNumLossesIter != learningMapAuto.enemyRaceInitMap.numOutcomes[false].end() &&
+                    ssToOverallNumLossesIter->second >= 5)
                 {
-                    isUpdatedStratSettings = updateStratSettingsLambda(enemyRaceScoutedMap);
-                }
-            }
-
-            if (!isUpdatedStratSettings)
-            {
-                isUpdatedStratSettings = updateStratSettingsLambda(enemyRaceInitMap);
-            }
-
-            if (!isUpdatedStratSettings)
-            {
-                // If have lost at least 5 games and win ratio is less than 80%...
-                if (learningMap.numOutcomes[false] >= 5 &&
-                    learningMap.numOutcomes[false] * 4 > learningMap.numOutcomes[true])
-                {
-                    // I.E. is4PoolBO vs isSpeedlingBO vs isHydraRushBO vs neither.
-                    const int randBONum = rand() % 4;
-
-                    ss.is4PoolBO = (randBONum == 0);
-                    ss.isSpeedlingBO = (randBONum == 1);
-                    ss.isHydraRushBO = (randBONum == 2);
-                    ss.isMutaRushBODecidedAfterScoutEnemyRace =
-                        (isMapPlasma_v_1_0 &&
-                         enemyRaceInit == BWAPI::Races::Unknown &&
-                         (rand() % 100 < 20));
-                    ss.isMutaRushBO = (rand() % 100 < 85);
-                    ss.isMutaRushBOVsProtoss = true;
-                    ss.isMutaRushBOVsTerran = true;
-                    ss.isMutaRushBOVsZerg = true;
-                    if (ss.isMutaRushBODecidedAfterScoutEnemyRace)
+                    if (thompsonSampleBest >= 0.0)
                     {
-                        while (ss.isMutaRushBOVsProtoss == ss.isMutaRushBOVsTerran &&
-                               ss.isMutaRushBOVsTerran == ss.isMutaRushBOVsZerg)
-                        {
-                            ss.isMutaRushBOVsProtoss = (rand() % 100 < 85);
-                            ss.isMutaRushBOVsTerran = (rand() % 100 < 85);
-                            ss.isMutaRushBOVsZerg = (rand() % 100 < 85);
-                        }
+                        ss = ssBest;
                     }
-
-                    ss.isSpeedlingPushDeferred = (randBONum == 1 && (rand() % 100 < 25));
-                    ss.isEnemyWorkerRusher = (rand() % 100 < 15);
-
-                    const int randNumSunkensIn = rand() % 100;
-                    ss.numSunkens = 0;
-                    if (randNumSunkensIn < 20)
-                    {
-                        ss.numSunkens = 0;
-                    }
-                    else if (randNumSunkensIn < 50)
-                    {
-                        ss.numSunkens = 1;
-                    }
-                    else if (randNumSunkensIn < 65)
-                    {
-                        ss.numSunkens = 2;
-                    }
-                    else if (randNumSunkensIn < 75)
-                    {
-                        ss.numSunkens = 3;
-                    }
-                    else if (randNumSunkensIn < 80)
-                    {
-                        ss.numSunkens = 5;
-                    }
-                    else if (randNumSunkensIn < 85)
-                    {
-                        ss.numSunkens = 8;
-                    }
-                    else if (randNumSunkensIn < 90)
-                    {
-                        ss.numSunkens = 11;
-                    }
-                    else if (randNumSunkensIn < 95)
-                    {
-                        ss.numSunkens = 15;
-                    }
+                    // Just for safety because should never happen.
+                    // Fall back to using the old default logic to sample a random strategy settings combo
+                    // (which the weighting logic was based on mimicking).
                     else
                     {
-                        ss.numSunkens = 19;
-                    }
-    
-                    ss.isNumSunkensDecidedAfterScoutEnemyRace =
-                        (enemyRaceInit == BWAPI::Races::Unknown &&
-                         (rand() % 100 < 20));
+                        // I.E. is4PoolBO vs isSpeedlingBO vs isHydraRushBO vs neither.
+                        const int randBONum = (int) (genRand() % 4);
 
-                    ss.numSunkensVsProtoss = 1;
-                    ss.numSunkensVsTerran = 1;
-                    ss.numSunkensVsZerg = 1;
-                    if (ss.isNumSunkensDecidedAfterScoutEnemyRace)
-                    {
-                        while (ss.numSunkensVsProtoss == ss.numSunkensVsTerran &&
-                               ss.numSunkensVsTerran == ss.numSunkensVsZerg)
+                        ss.is4PoolBO = (randBONum == 0);
+                        ss.isSpeedlingBO = (randBONum == 1);
+                        ss.isHydraRushBO = (randBONum == 2);
+                        ss.isMutaRushBODecidedAfterScoutEnemyRace =
+                            (isMapPlasma_v_1_0 &&
+                             enemyRaceInit == BWAPI::Races::Unknown &&
+                             (genRand() % 100 < 20));
+                        ss.isMutaRushBO = (genRand() % 100 < 85);
+                        ss.isMutaRushBOVsProtoss = true;
+                        ss.isMutaRushBOVsTerran = true;
+                        ss.isMutaRushBOVsZerg = true;
+                        if (ss.isMutaRushBODecidedAfterScoutEnemyRace)
                         {
-                            ss.numSunkensVsProtoss = (ss.numSunkens + ((rand() % 8) - 4));
-                            ss.numSunkensVsTerran = (ss.numSunkens + ((rand() % 8) - 4));
-                            ss.numSunkensVsZerg = (ss.numSunkens + ((rand() % 8) - 4));
+                            while (ss.isMutaRushBOVsProtoss == ss.isMutaRushBOVsTerran &&
+                                   ss.isMutaRushBOVsTerran == ss.isMutaRushBOVsZerg)
+                            {
+                                ss.isMutaRushBOVsProtoss = (genRand() % 100 < 85);
+                                ss.isMutaRushBOVsTerran = (genRand() % 100 < 85);
+                                ss.isMutaRushBOVsZerg = (genRand() % 100 < 85);
+                            }
+                        }
 
-                            ss.numSunkensVsProtoss *= (ss.numSunkensVsProtoss < 0 ? -1 : 1);
-                            ss.numSunkensVsTerran *= (ss.numSunkensVsTerran < 0 ? -1 : 1);
-                            ss.numSunkensVsZerg *= (ss.numSunkensVsZerg < 0 ? -1 : 1);
+                        ss.isSpeedlingPushDeferred = (randBONum == 1 && (genRand() % 100 < 25));
+                        ss.isEnemyWorkerRusher = (genRand() % 100 < 15);
+
+                        const int randNumSunkensIn = (int) (genRand() % 100);
+                        ss.numSunkens = 0;
+                        if (randNumSunkensIn < 20)
+                        {
+                            ss.numSunkens = 0;
+                        }
+                        else if (randNumSunkensIn < 50)
+                        {
+                            ss.numSunkens = 1;
+                        }
+                        else if (randNumSunkensIn < 65)
+                        {
+                            ss.numSunkens = 2;
+                        }
+                        else if (randNumSunkensIn < 75)
+                        {
+                            ss.numSunkens = 3;
+                        }
+                        else if (randNumSunkensIn < 80)
+                        {
+                            ss.numSunkens = 5;
+                        }
+                        else if (randNumSunkensIn < 85)
+                        {
+                            ss.numSunkens = 8;
+                        }
+                        else if (randNumSunkensIn < 90)
+                        {
+                            ss.numSunkens = 11;
+                        }
+                        else if (randNumSunkensIn < 95)
+                        {
+                            ss.numSunkens = 15;
+                        }
+                        else
+                        {
+                            ss.numSunkens = 19;
+                        }
+
+                        ss.isNumSunkensDecidedAfterScoutEnemyRace =
+                            (enemyRaceInit == BWAPI::Races::Unknown &&
+                             (genRand() % 100 < 20));
+
+                        ss.numSunkensVsProtoss = 1;
+                        ss.numSunkensVsTerran = 1;
+                        ss.numSunkensVsZerg = 1;
+                        if (ss.isNumSunkensDecidedAfterScoutEnemyRace)
+                        {
+                            while (ss.numSunkensVsProtoss == ss.numSunkensVsTerran &&
+                                   ss.numSunkensVsTerran == ss.numSunkensVsZerg)
+                            {
+                                ss.numSunkensVsProtoss = (ss.numSunkens + (((int) (genRand() % 8)) - 4));
+                                ss.numSunkensVsTerran = (ss.numSunkens + (((int) (genRand() % 8)) - 4));
+                                ss.numSunkensVsZerg = (ss.numSunkens + (((int) (genRand() % 8)) - 4));
+
+                                ss.numSunkensVsProtoss *= (ss.numSunkensVsProtoss < 0 ? -1 : 1);
+                                ss.numSunkensVsTerran *= (ss.numSunkensVsTerran < 0 ? -1 : 1);
+                                ss.numSunkensVsZerg *= (ss.numSunkensVsZerg < 0 ? -1 : 1);
+                            }
                         }
                     }
                 }
             }
-    
+
             // Append some info to a file for the enemy in the write folder.
             // Block to restrict scope of variables.
             {
                 std::ostringstream oss;
-    
+
                 oss << startOfLineSentinel << delim;
                 oss << endOfLineSentinel << delim;
-    
+
                 oss << startOfUpdateSentinel << delim;
                 oss << endOfUpdateSentinel << delim;
 
@@ -2125,11 +2585,11 @@ void ZZZKBotAIModule::onFrame()
 
                 oss << dataFileExtension << delim;
                 oss << pathFieldDelimiter << delim;
-                oss << myVersionMajor << delim;
-                oss << myVersionMinor << delim;
-                oss << myVersionUpdate << delim;
-                oss << myVersionPatch << delim;
-                oss << myVersionBuildNum << delim;
+                oss << dataVersionMajor << delim;
+                oss << dataVersionMinor << delim;
+                oss << dataVersionUpdate << delim;
+                oss << dataVersionPatch << delim;
+                oss << dataVersionBuildNum << delim;
                 oss << versionNumPrefix << delim;
                 oss << versionFieldDelimiter << delim;
                 oss << myVersionStr << delim;
@@ -2218,34 +2678,34 @@ void ZZZKBotAIModule::onFrame()
                 // Note: I would also record command optimization level, local speed, frame skip
                 // but unfortunately there doesn't seem to be a way to query for them except to test whether
                 // the tournament module lets you set them (but I don't want to set them).
-    
+
                 oss << Broodwar->isGUIEnabled() << delim;
 
                 // TODO: _dupenv_s is not portable.
-                char *pValue;
-                size_t len;
-                errno_t err = _dupenv_s(&pValue, &len, "NUMBER_OF_PROCESSORS");
-                if (err == 0)
-                {
-                    oss << pValue;
-                }
+                //char *pValue;
+                //size_t len;
+                //errno_t err = _dupenv_s(&pValue, &len, "NUMBER_OF_PROCESSORS");
+                //if (err == 0)
+                //{
+                //    oss << pValue;
+                //}
                 oss << delim;
-                free(pValue);
-                err = _dupenv_s(&pValue, &len, "PROCESSOR_ARCHITECTURE");
-                if (err == 0)
-                {
-                    oss << pValue;
-                }
+                //free(pValue);
+                //err = _dupenv_s(&pValue, &len, "PROCESSOR_ARCHITECTURE");
+                //if (err == 0)
+                //{
+                //    oss << pValue;
+                //}
                 oss << delim;
-                free(pValue);
-                err = _dupenv_s(&pValue, &len, "PROCESSOR_IDENTIFIER");
-                if (err == 0)
-                {
-                    oss << pValue;
-                }
+                //free(pValue);
+                //err = _dupenv_s(&pValue, &len, "PROCESSOR_IDENTIFIER");
+                //if (err == 0)
+                //{
+                //    oss << pValue;
+                //}
                 oss << delim;
-                free(pValue);
-    
+                //free(pValue);
+
                 oss << Broodwar->getFrameCount() << delim;
                 oss << Broodwar->elapsedTime() << delim;
 
@@ -2255,6 +2715,7 @@ void ZZZKBotAIModule::onFrame()
                 // Seconds since frame 0.
                 oss << "0" << delim;
                 struct tm buf;
+                memset(&buf, 0, sizeof(buf));
                 errno_t errNo = localtime_s(&buf, &timerAtGameStart);
                 if (errNo == 0)
                 {
@@ -2266,15 +2727,15 @@ void ZZZKBotAIModule::onFrame()
                     oss << std::put_time(&buf, "%H:%M:%S");
                 }
                 oss << delim;
-                if (errNo == 0)
-                {
-                    oss << std::put_time(&buf, "%z");
-                }
+                //if (errNo == 0)
+                //{
+                //    oss << std::put_time(&buf, "%z");
+                //}
                 oss << delim;
-                if (errNo == 0)
-                {
-                    oss << std::put_time(&buf, "%Z");
-                }
+                //if (errNo == 0)
+                //{
+                //    oss << std::put_time(&buf, "%Z");
+                //}
                 oss << delim;
 
                 oss << ss.is4PoolBO << delim;
@@ -2294,7 +2755,7 @@ void ZZZKBotAIModule::onFrame()
                 oss << ss.numSunkensVsZerg << delim;
 
                 oss << endOfUpdateSentinel << delim;
-    
+
                 // Block to restrict scope of variables.
                 {
                     // Append to the file for the enemy in the write folder.
@@ -2307,7 +2768,7 @@ void ZZZKBotAIModule::onFrame()
                         {
                             enemyWriteFileOFS << "\n";
                         }
-        
+
                         enemyWriteFileOFS << oss.str();
                         enemyWriteFileOFS.flush();
                     }
@@ -2327,7 +2788,7 @@ void ZZZKBotAIModule::onFrame()
             {
                 ss.numSunkens = 1;
             }
-    
+
             if (ss.is4PoolBO || ss.isSpeedlingBO)
             {
                 ss.is4PoolBO = !ss.is4PoolBO;
@@ -2385,20 +2846,21 @@ void ZZZKBotAIModule::onFrame()
                 enemyRaceScouted = enemyRaceScoutedNew;
 
                 std::ostringstream oss;
-        
+
                 oss << startOfUpdateSentinel << delim;
 
                 // Update type.
                 oss << raceScoutedUpdateSignifier << delim;
-        
+
                 oss << Broodwar->getFrameCount() << delim;
                 oss << Broodwar->elapsedTime() << delim;
-        
+
                 // Get time now.
                 // Note: localtime_s is not portable but w/e.
                 std::time_t timer = std::time(nullptr);
                 oss << (timer - timerAtGameStart) << delim;
                 struct tm buf;
+                memset(&buf, 0, sizeof(buf));
                 errno_t errNo = localtime_s(&buf, &timer);
                 if (errNo == 0)
                 {
@@ -2410,14 +2872,14 @@ void ZZZKBotAIModule::onFrame()
                     oss << std::put_time(&buf, "%H:%M:%S");
                 }
                 oss << delim;
-        
+
                 // Race rolled if Random race was picked, otherwise it is the particular race that was picked
                 // (if known, e.g. if CompleteMapInfo is enabled or their units are close enough for our units
                 // to see).
                 oss << enemyRaceScouted << delim;
-        
+
                 oss << endOfUpdateSentinel << delim;
-        
+
                 // Block to restrict scope of variables.
                 {
                     // Append to the file for the enemy in the write folder.
@@ -2435,6 +2897,7 @@ void ZZZKBotAIModule::onFrame()
     const int transitionOutOf4PoolFrameCountThresh = (ss.isSpeedlingBO || ss.isHydraRushBO || !ss.is4PoolBO) ? 0 : (8 * 60 * 24);
 
     // We ignore stolen gas, at least until a time near when we plan to make an extractor.
+    auto& mainBaseAuto = mainBase;
     auto isNotStolenGas =
         [&mainBaseAuto, &transitionOutOf4PoolFrameCountThresh](const Unit& tmpUnit)
         {
@@ -2445,7 +2908,6 @@ void ZZZKBotAIModule::onFrame()
                 mainBaseAuto->getDistance(tmpUnit) > 256;
         };
 
-    static std::set<BWAPI::Position> lastKnownEnemyUnliftedBuildingsAnywherePosSet;
     // Block to restrict scope of variables.
     {
         std::set<BWAPI::Position> vacantPosSet;
@@ -2466,14 +2928,6 @@ void ZZZKBotAIModule::onFrame()
             lastKnownEnemyUnliftedBuildingsAnywherePosSet.erase(pos);
         }
     }
-
-    // TODO: add separate logic for enemy overlords (because e.g. on maps with 3 or more start locations
-    // the first enemy overlord I see is not necessarily from the start position
-    // nearest it).
-    static BWAPI::Position firstEnemyNonWorkerSeenPos = BWAPI::Positions::Unknown;
-    static BWAPI::Position closestEnemySeenPos = BWAPI::Positions::Unknown;
-    static BWAPI::Position furthestEnemySeenPos = BWAPI::Positions::Unknown;
-    static bool isClosestEnemySeenAnOverlord = false;
 
     const Unitset& allUnits = Broodwar->getAllUnits();
     for (auto& u : allUnits)
@@ -2523,7 +2977,7 @@ void ZZZKBotAIModule::onFrame()
                 }
             }
         }
-    
+
         if (closestEnemySeenPos != BWAPI::Positions::Unknown && probableEnemyStartLocBasedOnEnemyUnits != BWAPI::TilePositions::Unknown)
         {
             if (!isClosestEnemySeenAnOverlord &&
@@ -2565,8 +3019,6 @@ void ZZZKBotAIModule::onFrame()
     // weapon range, or at least one of our buildings is low health.
     Unitset myCompletedWorkers;
     BWAPI::Unit lowLifeDrone = nullptr;
-    static BWAPI::Unit scoutingWorker = nullptr;
-    static BWAPI::Unit scoutingZergling = nullptr;
     bool isBuildingLowLife = false;
 
     // Count units by type myself because Broodwar->self()->allUnitCount() etc does
@@ -2583,10 +3035,15 @@ void ZZZKBotAIModule::onFrame()
 
     std::map<const BWAPI::TilePosition, int> numNonOverlordUnitsTargetingStartLoc;
 
-    static bool isScoutingUsingWorker = (!ss.isSpeedlingBO && !ss.isEnemyWorkerRusher && ss.is4PoolBO);
-    static bool isScoutingUsingZergling = (!isScoutingUsingWorker && !ss.is4PoolBO && ss.isSpeedlingBO);
-    static bool isNeedScoutingWorker = isScoutingUsingWorker;
-    static bool isNeedToMorphScoutingWorker = isScoutingUsingWorker;
+    if (!isScoutingInitialized)
+    {
+        isScoutingUsingWorker = (!ss.isSpeedlingBO && !ss.isEnemyWorkerRusher && ss.is4PoolBO);
+        isScoutingUsingZergling = (!isScoutingUsingWorker && !ss.is4PoolBO && ss.isSpeedlingBO);
+        isNeedScoutingWorker = isScoutingUsingWorker;
+        isNeedToMorphScoutingWorker = isScoutingUsingWorker;
+        isScoutingInitialized = true;
+    }
+
     int spireRemainingBuildTime = 0;
 
     for (auto& u : myUnits)
@@ -2676,8 +3133,6 @@ void ZZZKBotAIModule::onFrame()
         isNeedScoutingWorker = false;
         scoutingWorker = nullptr;
     }
-
-    static bool isScoutingWorkerReadyToScout = false;
 
     /*if (Broodwar->getFrameCount() >= transitionOutOf4PoolFrameCountThresh || supplyUsed >= 60)
     {
@@ -2794,8 +3249,9 @@ void ZZZKBotAIModule::onFrame()
     // TODO: support making buildings concurrently (rather than designing each building's prerequisites to avoid this situation).
     // TODO: support making more than one building of a particular type.
     // Note: geyser is only used when building an extractor.
-    static BWAPI::Unit geyser = nullptr;
-    auto geyserAuto = geyser;
+    auto& geyserAuto = geyser;
+    auto& gathererToResourceMapAuto = gathererToResourceMap;
+    auto& resourceToGathererMapAuto = resourceToGathererMap;
     auto makeUnit =
         [&mainBaseAuto, &allUnitCount, &getRoughPos, &gathererToResourceMapAuto, &resourceToGathererMapAuto, &lowLifeDrone, &geyserAuto, &noCmdPending](
             const BWAPI::UnitType& buildingType,
@@ -2818,7 +3274,7 @@ void ZZZKBotAIModule::onFrame()
 
             BWAPI::Unit oldReservedBuilder = reservedBuilder;
             const int oldUnitCount = allUnitCount[buildingType];
-        
+
             // TODO: support making more than one building of a particular type.
             if (allUnitCount[buildingType] <= (buildingType != BWAPI::UnitTypes::Zerg_Hatchery ? 0 : 1) && isNeeded)
             {
@@ -2837,7 +3293,7 @@ void ZZZKBotAIModule::onFrame()
                     };
 
                 if (builder == nullptr && mainBaseAuto)
-                {        
+                {
                     builder = mainBaseAuto->getClosestUnit(GetType == builderType && IsIdle && !IsCarryingSomething && IsOwned && isAvailableToBuild);
                     if (builder == nullptr)
                         builder = mainBaseAuto->getClosestUnit(GetType == builderType && IsGatheringMinerals && !IsCarryingSomething && IsOwned && isAvailableToBuild);
@@ -2872,7 +3328,7 @@ void ZZZKBotAIModule::onFrame()
                                     GetType == BWAPI::UnitTypes::Resource_Vespene_Geyser &&
                                     BWAPI::Filter::Exists,
                                     256);
-        
+
                             if (geyserAuto)
                             {
                                 targetBuildLoc = geyserAuto->getTilePosition();
@@ -2944,7 +3400,7 @@ void ZZZKBotAIModule::onFrame()
                             {
                                 resourceToGathererMapAuto.erase(gathererToResourceMapAuto.at(reservedBuilder));
                             }
-    
+
                             gathererToResourceMapAuto.erase(reservedBuilder);
                         }
                     }
@@ -2989,13 +3445,8 @@ void ZZZKBotAIModule::onFrame()
     const UnitType groundArmyBuildingType =
         (allUnitCount[UnitTypes::Zerg_Spawning_Pool] == 0 || !ss.isHydraRushBO) ? UnitTypes::Zerg_Spawning_Pool : UnitTypes::Zerg_Hydralisk_Den;
 
-    // We are 4-pool'ing, hence the figure 24 (i.e. start moving a worker to the build location before we have enough minerals).
-    // If drone(s) have died then don't move the builder until we have the full amount of minerals required.
-    static Unit groundArmyBuildingBuilder = nullptr;
     // Block to restrict scope of variables.
     {
-        static BWAPI::TilePosition groundArmyBuildingLoc = BWAPI::TilePositions::None;
-        static int frameLastCheckedGroundArmyBuildingLoc = 0;
         const int checkGroundArmyBuildingLocFreqFrames = (10 * 24);
         makeUnit(
             groundArmyBuildingType, groundArmyBuildingBuilder, groundArmyBuildingLoc, frameLastCheckedGroundArmyBuildingLoc, checkGroundArmyBuildingLocFreqFrames,
@@ -3005,6 +3456,8 @@ void ZZZKBotAIModule::onFrame()
             (Broodwar->canMake(groundArmyBuildingType) ||
              (groundArmyBuildingType == BWAPI::UnitTypes::Zerg_Spawning_Pool &&
               Broodwar->self()->deadUnitCount(BWAPI::UnitTypes::Zerg_Drone) == 0 &&
+              // We are 4-pool'ing, hence the figure 24 (i.e. start moving a worker to the build location before we have enough minerals).
+              // If drone(s) have died then don't move the builder until we have the full amount of minerals required.
               Broodwar->self()->minerals() >= groundArmyBuildingType.mineralPrice() - 24)));
     }
 
@@ -3017,11 +3470,8 @@ void ZZZKBotAIModule::onFrame()
 
     // Use the extractor trick whenever possible when supply-blocked, or when a drone is very low life,
     // or morph an extractor for gathering gas if the time is right.
-    static Unit extractorBuilder = nullptr;
     // Block to restrict scope of variables.
     {
-        static BWAPI::TilePosition extractorLoc = BWAPI::TilePositions::None;
-        static int frameLastCheckedExtractorLoc = 0;
         const int checkExtractorLocFreqFrames = (1 * 24);
         makeUnit(
             BWAPI::UnitTypes::Zerg_Extractor, extractorBuilder, extractorLoc, frameLastCheckedExtractorLoc, checkExtractorLocFreqFrames,
@@ -3047,9 +3497,6 @@ void ZZZKBotAIModule::onFrame()
     // Morph creep colony/ies late-game.
     // Block to restrict scope of variables.
     {
-        static Unit creepColonyBuilder = nullptr;
-        static BWAPI::TilePosition creepColonyLoc = BWAPI::TilePositions::None;
-        static int frameLastCheckedCreepColonyLoc = 0;
         const int checkCreepColonyLocFreqFrames = (10 * 24);
         makeUnit(
             BWAPI::UnitTypes::Zerg_Creep_Colony, creepColonyBuilder, creepColonyLoc, frameLastCheckedCreepColonyLoc, checkCreepColonyLocFreqFrames,
@@ -3067,9 +3514,6 @@ void ZZZKBotAIModule::onFrame()
     // Morph another hatchery late-game.
     // Block to restrict scope of variables.
     {
-        static Unit hatcheryBuilder = nullptr;
-        static BWAPI::TilePosition hatcheryLoc = BWAPI::TilePositions::None;
-        static int frameLastCheckedHatcheryLoc = 0;
         const int checkHatcheryLocFreqFrames = (10 * 24);
         makeUnit(
             BWAPI::UnitTypes::Zerg_Hatchery, hatcheryBuilder, hatcheryLoc, frameLastCheckedHatcheryLoc, checkHatcheryLocFreqFrames,
@@ -3093,9 +3537,6 @@ void ZZZKBotAIModule::onFrame()
     // Morph to queen's nest late-game.
     // Block to restrict scope of variables.
     {
-        static Unit queensNestBuilder = nullptr;
-        static BWAPI::TilePosition queensNestLoc = BWAPI::TilePositions::None;
-        static int frameLastCheckedQueensNestLoc = 0;
         const int checkQueensNestLocFreqFrames = (10 * 24);
         makeUnit(
             BWAPI::UnitTypes::Zerg_Queens_Nest, queensNestBuilder, queensNestLoc, frameLastCheckedQueensNestLoc, checkQueensNestLocFreqFrames,
@@ -3111,9 +3552,6 @@ void ZZZKBotAIModule::onFrame()
     // and otherwise builders may try to build at the same place and fail.
     // Block to restrict scope of variables.
     {
-        static Unit spireBuilder = nullptr;
-        static BWAPI::TilePosition spireLoc = BWAPI::TilePositions::None;
-        static int frameLastCheckedSpireLoc = 0;
         const int checkSpireLocFreqFrames = (10 * 24);
         makeUnit(
             BWAPI::UnitTypes::Zerg_Spire, spireBuilder, spireLoc, frameLastCheckedSpireLoc, checkSpireLocFreqFrames,
@@ -3131,9 +3569,6 @@ void ZZZKBotAIModule::onFrame()
     // and otherwise builders may try to build at the same place and fail.
     // Block to restrict scope of variables.
     {
-        static Unit hydraDenBuilder = nullptr;
-        static BWAPI::TilePosition hydraDenLoc = BWAPI::TilePositions::None;
-        static int frameLastCheckedHydraDenLoc = 0;
         const int checkHydraDenLocFreqFrames = (10 * 24);
         makeUnit(
             BWAPI::UnitTypes::Zerg_Hydralisk_Den, hydraDenBuilder, hydraDenLoc, frameLastCheckedHydraDenLoc, checkHydraDenLocFreqFrames,
@@ -3150,9 +3585,6 @@ void ZZZKBotAIModule::onFrame()
     // because I prefer guardians before ultras.
     // Block to restrict scope of variables.
     {
-        static Unit ultraCavernBuilder = nullptr;
-        static BWAPI::TilePosition ultraCavernLoc = BWAPI::TilePositions::None;
-        static int frameLastCheckedUltraCavernLoc = 0;
         const int checkUltraCavernLocFreqFrames = (10 * 24);
         makeUnit(
             BWAPI::UnitTypes::Zerg_Ultralisk_Cavern, ultraCavernBuilder, ultraCavernLoc, frameLastCheckedUltraCavernLoc, checkUltraCavernLocFreqFrames,
@@ -3168,7 +3600,6 @@ void ZZZKBotAIModule::onFrame()
     {
         if (u->getType() == BWAPI::UnitTypes::Zerg_Extractor && u->isCompleted())
         {
-            static int lastAddedGathererToRefinery = 0;
             if (Broodwar->getFrameCount() > lastAddedGathererToRefinery + (3 * 24))
             {
                 BWAPI::Unit gasGatherer = u->getClosestUnit(
@@ -3198,7 +3629,7 @@ void ZZZKBotAIModule::onFrame()
                 else
                 {
                     if (gasGatherer == nullptr && myCompletedWorkers.size() > 6)
-                    {        
+                    {
                         auto isAvailableToGatherFrom =
                             [&u, &noCmdPending](Unit& tmpUnit)
                             {
@@ -3216,18 +3647,18 @@ void ZZZKBotAIModule::onFrame()
                         if (newGasGatherer)
                         {
                             newGasGatherer->gather(u);
-        
+
                             if (resourceToGathererMap.find(u) != resourceToGathererMap.end())
                             {
                                 gathererToResourceMap.erase(resourceToGathererMap.at(u));
                             }
-        
+
                             resourceToGathererMap[u] = newGasGatherer;
                             gathererToResourceMap[newGasGatherer] = u;
                             lastAddedGathererToRefinery = Broodwar->getFrameCount();
                         }
                     }
-        
+
                     break;
                 }
             }
@@ -3609,7 +4040,7 @@ void ZZZKBotAIModule::onFrame()
                     }
                 }
                 else
-                {    
+                {
                     if (curUnit->getAirWeaponCooldown() != bestSoFarUnit->getAirWeaponCooldown())
                     {
                         return curUnit->getAirWeaponCooldown() < bestSoFarUnit->getAirWeaponCooldown() ? curUnit : bestSoFarUnit;
@@ -3832,19 +4263,19 @@ void ZZZKBotAIModule::onFrame()
                             [&u](Unit& tmpUnit) { return u->isInWeaponRange(tmpUnit) && u->canAttack(tmpUnit); },
                             u->getPosition(),
                             std::max(u->getType().dimensionLeft(), std::max(u->getType().dimensionUp(), std::max(u->getType().dimensionRight(), u->getType().dimensionDown()))) + Broodwar->self()->weaponMaxRange(u->getType().groundWeapon()));
-    
+
                     if (bestAttackableEnemyNonBuildingUnit && u->canAttack(bestAttackableEnemyNonBuildingUnit))
                     {
                         const BWAPI::Unit oldOrderTarget = u->getTarget();
                         if (u->isIdle() || oldOrderTarget == nullptr || oldOrderTarget != bestAttackableEnemyNonBuildingUnit)
                         {
                             u->attack(bestAttackableEnemyNonBuildingUnit);
-    
+
                             if (gathererToResourceMap.find(u) != gathererToResourceMap.end() && resourceToGathererMap.find(gathererToResourceMap.at(u)) != resourceToGathererMap.end() && resourceToGathererMap.at(gathererToResourceMap.at(u)) == u)
                             {
                                 resourceToGathererMap.erase(gathererToResourceMap.at(u));
                             }
-    
+
                             gathererToResourceMap.erase(u);
                         }
 
@@ -3883,7 +4314,7 @@ void ZZZKBotAIModule::onFrame()
                                     {
                                         u->returnCargo();
                                     }
-        
+
                                     continue;
                                 }
                             }
@@ -3945,7 +4376,6 @@ void ZZZKBotAIModule::onFrame()
         else if (u->getType() == BWAPI::UnitTypes::Zerg_Hatchery)
         {
             // Morph to lair late-game.
-            static bool issuedMorphLairCmd = false;
             if (u->canMorph(BWAPI::UnitTypes::Zerg_Lair) &&
                 allUnitCount[BWAPI::UnitTypes::Zerg_Lair] + allUnitCount[BWAPI::UnitTypes::Zerg_Hive] == 0 &&
                 ((!ss.isSpeedlingBO && !ss.isHydraRushBO) ||
@@ -3963,7 +4393,6 @@ void ZZZKBotAIModule::onFrame()
         else if (u->getType() == BWAPI::UnitTypes::Zerg_Creep_Colony)
         {
             // Morph to sunken late-game.
-            static bool issuedMorphSunkenColonyCmd = false;
             if (u->canMorph(BWAPI::UnitTypes::Zerg_Sunken_Colony) && allUnitCount[BWAPI::UnitTypes::Zerg_Drone] + numWorkersTrainedThisFrame >= 1)
             {
                 u->morph(BWAPI::UnitTypes::Zerg_Sunken_Colony);
@@ -3974,7 +4403,6 @@ void ZZZKBotAIModule::onFrame()
         else if (u->getType() == BWAPI::UnitTypes::Zerg_Lair)
         {
             // Morph to hive late-game.
-            static bool issuedMorphHiveCmd = false;
             if (u->canMorph(BWAPI::UnitTypes::Zerg_Hive) && allUnitCount[BWAPI::UnitTypes::Zerg_Hive] == 0)
             {
                 u->morph(BWAPI::UnitTypes::Zerg_Hive);
@@ -3985,7 +4413,6 @@ void ZZZKBotAIModule::onFrame()
         else if (u->getType() == BWAPI::UnitTypes::Zerg_Spire)
         {
             // Morph to greater spire late-game.
-            static bool issuedMorphGreaterSpireCmd = false;
             if (u->canMorph(BWAPI::UnitTypes::Zerg_Greater_Spire) && allUnitCount[BWAPI::UnitTypes::Zerg_Greater_Spire] == 0)
             {
                 u->morph(BWAPI::UnitTypes::Zerg_Greater_Spire);
@@ -4056,7 +4483,8 @@ void ZZZKBotAIModule::onFrame()
         {
             // Train more ground combat units.
             if (((Broodwar->getFrameCount() < transitionOutOf4PoolFrameCountThresh &&
-                  ((ss.numSunkens > 0 && allUnitCount[UnitTypes::Zerg_Creep_Colony] + allUnitCount[UnitTypes::Zerg_Sunken_Colony] > 0) ||
+                  (ss.numSunkens == 0 ||
+                   allUnitCount[UnitTypes::Zerg_Creep_Colony] + allUnitCount[UnitTypes::Zerg_Sunken_Colony] > 0 ||
                    !((ss.isSpeedlingBO || ss.isHydraRushBO) ? (myCompletedWorkers.size() >= 6 && Broodwar->self()->deadUnitCount(groundArmyUnitType) > 10) : (myCompletedWorkers.size() >= 3 && Broodwar->self()->deadUnitCount(groundArmyUnitType) > 14)))) ||
                  (Broodwar->getFrameCount() >= transitionOutOf4PoolFrameCountThresh &&
                   (((completedUnitCount[UnitTypes::Zerg_Ultralisk_Cavern] == 0 &&
@@ -4099,7 +4527,6 @@ void ZZZKBotAIModule::onFrame()
                  supplyUsed + (((allUnitCount[BWAPI::UnitTypes::Zerg_Hatchery] + allUnitCount[BWAPI::UnitTypes::Zerg_Lair] + allUnitCount[BWAPI::UnitTypes::Zerg_Hive]) * ((Broodwar->self()->deadUnitCount(UnitTypes::Zerg_Mutalisk) == 0 && ss.isMutaRushBO && incompleteUnitCount[BWAPI::UnitTypes::Zerg_Spire] > 0 && allUnitCount[BWAPI::UnitTypes::Zerg_Spire] + allUnitCount[BWAPI::UnitTypes::Zerg_Greater_Spire] == 1) ? 3 : 1) + 1) * (allUnitCount[BWAPI::UnitTypes::Zerg_Ultralisk_Cavern] > 0 ? BWAPI::UnitTypes::Zerg_Ultralisk.supplyRequired() : (allUnitCount[BWAPI::UnitTypes::Zerg_Spire] + allUnitCount[BWAPI::UnitTypes::Zerg_Greater_Spire] + allUnitCount[BWAPI::UnitTypes::Zerg_Defiler_Mound] + allUnitCount[BWAPI::UnitTypes::Zerg_Queens_Nest] + allUnitCount[BWAPI::UnitTypes::Zerg_Hydralisk_Den] > 0 ? BWAPI::UnitTypes::Zerg_Mutalisk.supplyRequired() : BWAPI::UnitTypes::Zerg_Drone.supplyRequired()))) > Broodwar->self()->supplyTotal() + (incompleteUnitCount[supplyProviderType] * supplyProviderType.supplyProvided()) &&
                  (isStartedTransitioning || (supplyUsed + 2 > Broodwar->self()->supplyTotal() + (incompleteUnitCount[supplyProviderType] * supplyProviderType.supplyProvided())))))
             {
-                static int lastIssuedBuildSupplyProviderCmd = 0;
                 if (Broodwar->getFrameCount() >= lastIssuedBuildSupplyProviderCmd + (10 * 24))
                 {
                     // Retrieve a unit that is capable of constructing the supply needed
@@ -4324,7 +4751,7 @@ void ZZZKBotAIModule::onFrame()
                             mainBase->getPosition(),
                             896);
                 }
-    
+
                 if (defenceAttackTargetUnit && u->canAttack(defenceAttackTargetUnit) &&
                     ((Broodwar->getFrameCount() < transitionOutOf4PoolFrameCountThresh && supplyUsed < 60) || u->getDistance(defenceAttackTargetUnit) < 896) &&
                     // I.E. during muta rush phase, don't defend with mutalisks against particular unit types - prefer to harass initially instead.
@@ -4350,8 +4777,8 @@ void ZZZKBotAIModule::onFrame()
             if (u->getType() == BWAPI::UnitTypes::Zerg_Mutalisk &&
                 allUnitCount[UnitTypes::Zerg_Guardian] <= 8 &&
                 (!ss.isMutaRushBO || Broodwar->self()->deadUnitCount(UnitTypes::Zerg_Mutalisk) > 0) &&
-                (!mainBaseAuto ||
-                 u->getDistance(mainBaseAuto) < 512))
+                (!mainBase ||
+                 u->getDistance(mainBase) < 512))
             {
                 continue;
             }
@@ -4606,7 +5033,7 @@ void ZZZKBotAIModule::onFrame()
                     }
                 }
             }
-            
+
             if (targetPos != BWAPI::Positions::Unknown && !targetStartLocs.empty() && u->isFlying() && u->getType().groundWeapon() != BWAPI::WeaponTypes::None)
             {
                 // This makes mutalisks/guardians head towards the possible enemy base rather than towards the closest
@@ -4654,8 +5081,8 @@ void ZZZKBotAIModule::onFrame()
                     for (int i = 0; i < 10; ++i)
                     {
                         pos =
-                            Position(rand() % (Broodwar->mapWidth() * BWAPI::TILEPOSITION_SCALE),
-                                     rand() % (Broodwar->mapHeight() * BWAPI::TILEPOSITION_SCALE));
+                            Position(((int) (genRand() % (Broodwar->mapWidth() * BWAPI::TILEPOSITION_SCALE))),
+                                     ((int) (genRand() % (Broodwar->mapHeight() * BWAPI::TILEPOSITION_SCALE))));
 
                         if (!Broodwar->isVisible(TilePosition(pos)))
                         {
@@ -4691,7 +5118,7 @@ void ZZZKBotAIModule::onFrame()
                         {
                             return (u->getDistance(getRoughPos(loc1, BWAPI::UnitTypes::Special_Start_Location)) < u->getDistance(getRoughPos(loc2, BWAPI::UnitTypes::Special_Start_Location)));
                         });
-    
+
                     BWAPI::TilePosition startLocWithFewestUnits = BWAPI::TilePositions::None;
                     for (const BWAPI::TilePosition startLoc : targetStartLocs)
                     {
@@ -4711,7 +5138,7 @@ void ZZZKBotAIModule::onFrame()
                             startLocWithFewestUnits = startLoc;
                         }
                     }
-    
+
                     if (locIfAny == BWAPI::TilePositions::None && startLocWithFewestUnits != BWAPI::TilePositions::None)
                     {
                         locIfAny = startLocWithFewestUnits;
@@ -4735,7 +5162,7 @@ void ZZZKBotAIModule::onFrame()
                         // matter if the command optimization option level is zero).
                         u->rightClick(pos);
                         isCmdIssued = true;
-                    }    
+                    }
                     else if (u->canMove())
                     {
                         u->move(pos);
@@ -4867,8 +5294,8 @@ void ZZZKBotAIModule::onFrame()
             {
                 // Commented out randomizing - for now let's return overlords back to our base for safety.
                 //// Target a random position.
-                //targetPos = Position(rand() % (Broodwar->mapWidth() * BWAPI::TILEPOSITION_SCALE),
-                //                     rand() % (Broodwar->mapHeight() * BWAPI::TILEPOSITION_SCALE));
+                //targetPos = Position(((int) (genRand() % (Broodwar->mapWidth() * BWAPI::TILEPOSITION_SCALE))),
+                //                     ((int) (genRand() % (Broodwar->mapHeight() * BWAPI::TILEPOSITION_SCALE))));
                 if (myStartRoughPos != BWAPI::Positions::Unknown)
                 {
                     targetPos = myStartRoughPos;
@@ -4891,7 +5318,7 @@ void ZZZKBotAIModule::onFrame()
                     // matter if the command optimization option level is zero).
                     u->rightClick(targetPos);
                     isCmdIssued = true;
-                }    
+                }
                 else if (u->canMove())
                 {
                     u->move(targetPos);
@@ -4938,7 +5365,7 @@ void ZZZKBotAIModule::onFrame()
         // to the same mineral patch but never mind).
         if (mainBase)
         {
-            Unitset& freeMinerals =
+            BWAPI::Unitset freeMinerals =
                 mainBase->getUnitsInRadius(
                     256,
                     BWAPI::Filter::IsMineralField &&
@@ -4949,13 +5376,13 @@ void ZZZKBotAIModule::onFrame()
                         {
                             return false;
                         }
-    
+
                         std::map<const BWAPI::Unit, BWAPI::Unit>::iterator resourceToGathererMapIter = resourceToGathererMapAuto.find(tmpUnit);
                         if (resourceToGathererMapIter == resourceToGathererMapAuto.end())
                         {
                             return true;
                         }
-    
+
                         BWAPI::Unit& gatherer = resourceToGathererMapIter->second;
                         if (!gatherer->exists() ||
                             myFreeGatherers.contains(gatherer) ||
@@ -4968,13 +5395,13 @@ void ZZZKBotAIModule::onFrame()
                         {
                             return true;
                         }
-    
+
                         std::map<const BWAPI::Unit, BWAPI::Unit>::iterator gathererToResourceMapIter = gathererToResourceMapAuto.find(gatherer);
                         if (gathererToResourceMapIter == gathererToResourceMapAuto.end())
                         {
                             return true;
                         }
-    
+
                         BWAPI::Unit& resource = gathererToResourceMapIter->second;
                         return resource != tmpUnit;
                     });
@@ -4987,7 +5414,7 @@ void ZZZKBotAIModule::onFrame()
             struct MineralToDepotCostMap { std::map<int, TotCostMap> val; };
             // The key is the gatherer.
             struct CostMap { std::map<const BWAPI::Unit, MineralToDepotCostMap> val; };
-    
+
             CostMap costMap;
             bool isGatherPossible = false;
 
@@ -5035,7 +5462,7 @@ void ZZZKBotAIModule::onFrame()
                             isGatherPossibleForGatherer = true;
                             break;
                         }
-    
+
                         for (std::map<int, MineralSet>::iterator totCostIter = mineralToDepotCostIter->second.val.begin(); totCostIter != mineralToDepotCostIter->second.val.end(); )
                         {
                             bool isGatherPossibleForTotCost = false;
@@ -5045,7 +5472,7 @@ void ZZZKBotAIModule::onFrame()
                                 isGatherPossibleForMineralToDepotCost = true;
                                 break;
                             }
-    
+
                             for (std::set<BWAPI::Unit>::iterator mineralIter = totCostIter->second.val.begin(); mineralIter != totCostIter->second.val.end(); )
                             {
                                 if (!freeMinerals.contains(*mineralIter))
@@ -5113,12 +5540,12 @@ void ZZZKBotAIModule::onFrame()
 
                     myFreeGatherers.erase(bestGatherer);
                     freeMinerals.erase(bestMineral);
-                
+
                     if (gathererToResourceMap.find(bestGatherer) != gathererToResourceMap.end() && resourceToGathererMap.find(gathererToResourceMap.at(bestGatherer)) != resourceToGathererMap.end() && resourceToGathererMap.at(gathererToResourceMap.at(bestGatherer)) == bestGatherer)
                     {
                         resourceToGathererMap.erase(gathererToResourceMap.at(bestGatherer));
                     }
-                
+
                     resourceToGathererMap[bestMineral] = bestGatherer;
                     gathererToResourceMap[bestGatherer] = bestMineral;
                     continue;
@@ -5144,8 +5571,8 @@ void ZZZKBotAIModule::onFrame()
                     {
                         return tmpUnit->getResources() > 0 && u->canGather(tmpUnit);
                     },
-                    mainBaseAuto->getPosition(),
-                    std::max(mainBaseAuto->getType().dimensionLeft(), std::max(mainBaseAuto->getType().dimensionUp(), std::max(mainBaseAuto->getType().dimensionRight(), mainBaseAuto->getType().dimensionDown()))) + 256);
+                    mainBase->getPosition(),
+                    std::max(mainBase->getType().dimensionLeft(), std::max(mainBase->getType().dimensionUp(), std::max(mainBase->getType().dimensionRight(), mainBase->getType().dimensionDown()))) + 256);
 
                 if (mineralField == nullptr)
                 {
@@ -5161,12 +5588,12 @@ void ZZZKBotAIModule::onFrame()
                 if (mineralField)
                 {
                     u->gather(mineralField);
-                
+
                     if (gathererToResourceMap.find(u) != gathererToResourceMap.end() && resourceToGathererMap.find(gathererToResourceMap.at(u)) != resourceToGathererMap.end() && resourceToGathererMap.at(gathererToResourceMap.at(u)) == u)
                     {
                         resourceToGathererMap.erase(gathererToResourceMap.at(u));
                     }
-                
+
                     resourceToGathererMap[mineralField] = u;
                     gathererToResourceMap[u] = mineralField;
                     continue;
@@ -5186,7 +5613,7 @@ void ZZZKBotAIModule::onFrame()
             {
                 u->setClientInfo(Broodwar->getFrameCount(), frameLastChangedPosInd);
             }
-    
+
             u->setClientInfo(newX, posXInd);
             u->setClientInfo(newY, posYInd);
 
@@ -5204,7 +5631,7 @@ void ZZZKBotAIModule::onFrame()
             {
                 u->setClientInfo(Broodwar->getFrameCount(), frameLastStartingAttackInd);
             }
-    
+
             if (u->getType().isWorker() && u->isCarryingMinerals())
             {
                 u->setClientInfo(wasJustCarryingMineralsTrueVal, wasJustCarryingMineralsInd);
@@ -5216,7 +5643,7 @@ void ZZZKBotAIModule::onFrame()
                 u->setClientInfo(Broodwar->getFrameCount(), lastPeakGroundWeaponCooldownFrameInd);
             }
             u->setClientInfo(u->getGroundWeaponCooldown(), lastGroundWeaponCooldownInd);
-            
+
             if (u->getAirWeaponCooldown() > (int) u->getClientInfo(lastAirWeaponCooldownInd))
             {
                 u->setClientInfo(u->getAirWeaponCooldown(), lastPeakAirWeaponCooldownInd);
@@ -5236,7 +5663,7 @@ void ZZZKBotAIModule::onSendText(std::string text)
     // otherwise you may run into problems when you use the %(percent) character!
 }
 
-void ZZZKBotAIModule::onReceiveText(BWAPI::Player player, std::string text)
+void ZZZKBotAIModule::onReceiveText(BWAPI::Player /*player*/, std::string /*text*/)
 {
 }
 
@@ -5257,7 +5684,6 @@ void ZZZKBotAIModule::onPlayerLeft(BWAPI::Player player)
     // for whatever reason, e.g. perhaps it could happen while the game is paused/unpaused?
     // Better safe than sorry because we do not want to spam the output file while the game is
     // paused.
-    static std::set<int> playerIDsLeft;
     if (playerIDsLeft.find(player->getID()) != playerIDsLeft.end())
     {
         return;
@@ -5267,20 +5693,21 @@ void ZZZKBotAIModule::onPlayerLeft(BWAPI::Player player)
     if (enemyPlayerID >= 0)
     {
         std::ostringstream oss;
-    
+
         oss << startOfUpdateSentinel << delim;
-    
+
         // Update type.
         oss << onPlayerLeftUpdateSignifier << delim;
-    
+
         oss << Broodwar->getFrameCount() << delim;
         oss << Broodwar->elapsedTime() << delim;
-    
+
         // Get time now.
         // Note: localtime_s is not portable but w/e.
         std::time_t timer = std::time(nullptr);
         oss << (timer - timerAtGameStart) << delim;
         struct tm buf;
+        memset(&buf, 0, sizeof(buf));
         errno_t errNo = localtime_s(&buf, &timer);
         if (errNo == 0)
         {
@@ -5297,9 +5724,9 @@ void ZZZKBotAIModule::onPlayerLeft(BWAPI::Player player)
         // TODO: player names may contain unusual characters, so sanitize by stripping or replacing them
         // (esp. tabs because I use tab as a delimiter).
         oss << player->getName() << delim;
-    
+
         oss << endOfUpdateSentinel << delim;
-    
+
         // Block to restrict scope of variables.
         {
             // Append to the file for the enemy in the write folder.
@@ -5329,19 +5756,19 @@ void ZZZKBotAIModule::onNukeDetect(BWAPI::Position target)
     // You can also retrieve all the nuclear missile targets using Broodwar->getNukeDots()!
 }
 
-void ZZZKBotAIModule::onUnitDiscover(BWAPI::Unit unit)
+void ZZZKBotAIModule::onUnitDiscover(BWAPI::Unit /*unit*/)
 {
 }
 
-void ZZZKBotAIModule::onUnitEvade(BWAPI::Unit unit)
+void ZZZKBotAIModule::onUnitEvade(BWAPI::Unit /*unit*/)
 {
 }
 
-void ZZZKBotAIModule::onUnitShow(BWAPI::Unit unit)
+void ZZZKBotAIModule::onUnitShow(BWAPI::Unit /*unit*/)
 {
 }
 
-void ZZZKBotAIModule::onUnitHide(BWAPI::Unit unit)
+void ZZZKBotAIModule::onUnitHide(BWAPI::Unit /*unit*/)
 {
 }
 
@@ -5360,7 +5787,7 @@ void ZZZKBotAIModule::onUnitCreate(BWAPI::Unit unit)
     }
 }
 
-void ZZZKBotAIModule::onUnitDestroy(BWAPI::Unit unit)
+void ZZZKBotAIModule::onUnitDestroy(BWAPI::Unit /*unit*/)
 {
 }
 
@@ -5379,7 +5806,7 @@ void ZZZKBotAIModule::onUnitMorph(BWAPI::Unit unit)
     }
 }
 
-void ZZZKBotAIModule::onUnitRenegade(BWAPI::Unit unit)
+void ZZZKBotAIModule::onUnitRenegade(BWAPI::Unit /*unit*/)
 {
 }
 
@@ -5388,6 +5815,6 @@ void ZZZKBotAIModule::onSaveGame(std::string gameName)
     Broodwar << "The game was saved to \"" << gameName << "\"" << std::endl;
 }
 
-void ZZZKBotAIModule::onUnitComplete(BWAPI::Unit unit)
+void ZZZKBotAIModule::onUnitComplete(BWAPI::Unit /*unit*/)
 {
 }
